@@ -94,6 +94,21 @@ test('applyPowerUp adds bonus score for score powerups', () => {
   assert.equal(updated.score, 70);
 });
 
+test('fixed powerup rewards scale with difficulty', () => {
+  const state = {
+    paddle: { width: 80 },
+    ball: { vx: 4, vy: -4 },
+    score: 0
+  };
+
+  assert.equal(applyPowerUp({ type: 'score' }, { ...state, difficultyMultiplier: 0.8 }).score, 40);
+  assert.equal(applyPowerUp({ type: 'score' }, { ...state, difficultyMultiplier: 1 }).score, 50);
+  assert.equal(applyPowerUp({ type: 'score' }, { ...state, difficultyMultiplier: 1.4 }).score, 70);
+  assert.equal(applyPowerUp({ type: 'bonus' }, { ...state, difficultyMultiplier: 1.4 }).score, 42);
+  assert.equal(applyPowerUp({ type: 'multi' }, { ...state, difficultyMultiplier: 1.4 }).score, 28);
+  assert.equal(applyPowerUp({ type: 'jackpot' }, { ...state, difficultyMultiplier: 1.4 }).score, 140);
+});
+
 test('applyPowerUp slows the ball without changing its direction', () => {
   const state = { paddle: { width: 80 }, ball: { vx: -4, vy: 4 }, score: 0 };
 
@@ -173,6 +188,17 @@ test('addLeaderboardEntry preserves separate players with equal scores', () => {
 
   assert.equal(updated.length, 2);
   assert.deepEqual(updated.map((entry) => entry.id), ['a', 'b']);
+});
+
+test('addLeaderboardEntry preserves the selected difficulty', () => {
+  const updated = addLeaderboardEntry([], {
+    id: 'hard-score',
+    name: 'Ada',
+    score: 140,
+    difficulty: 'hard'
+  });
+
+  assert.equal(updated[0].difficulty, 'hard');
 });
 
 test('pickWeightedPowerUp respects configured rarity weights', () => {

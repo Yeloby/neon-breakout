@@ -36,6 +36,12 @@ const DIFFICULTIES = {
   normal: { paddleWidth: 88, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
   hard: { paddleWidth: 72, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
 };
+const DIFFICULTY_LABELS = {
+  easy: 'Lett',
+  normal: 'Normal',
+  hard: 'Vanskelig',
+  unknown: 'Ukjent'
+};
 const settings = loadSettings();
 
 let score = 0;
@@ -134,7 +140,8 @@ function loadLeaderboard() {
       .map((entry, index) => ({
         id: typeof entry.id === 'string' ? entry.id : `legacy-${index}-${entry.score}`,
         name: entry.name.slice(0, 12),
-        score: entry.score
+        score: entry.score,
+        difficulty: DIFFICULTIES[entry.difficulty] ? entry.difficulty : 'unknown'
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
@@ -162,12 +169,15 @@ function renderLeaderboardInto(target, limit) {
     const item = document.createElement('li');
     const rank = document.createElement('span');
     const name = document.createElement('strong');
+    const difficulty = document.createElement('span');
     const entryScore = document.createElement('span');
     rank.className = 'rank';
     rank.textContent = `#${index + 1}`;
     name.textContent = entry.name;
+    difficulty.className = 'difficulty';
+    difficulty.textContent = DIFFICULTY_LABELS[entry.difficulty] || DIFFICULTY_LABELS.unknown;
     entryScore.textContent = String(entry.score);
-    item.append(rank, name, entryScore);
+    item.append(rank, name, difficulty, entryScore);
     target.append(item);
   });
 }
@@ -550,6 +560,7 @@ function updatePowerUps() {
         lightningTimer,
         startingPaddleWidth: DIFFICULTIES[settings.difficulty].paddleWidth,
         maxPaddleWidth: MAX_PADDLE_WIDTH,
+        difficultyMultiplier: DIFFICULTIES[settings.difficulty].scoreMultiplier,
         catchCharges,
         piercingHits,
         shieldCharges
@@ -737,7 +748,12 @@ function updateBall() {
       const enteredName = playerNameInput?.value?.trim();
       const playerName = enteredName || 'ANON';
       const entryId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      leaderboard = addLeaderboardEntry(leaderboard, { id: entryId, name: playerName, score });
+      leaderboard = addLeaderboardEntry(leaderboard, {
+        id: entryId,
+        name: playerName,
+        score,
+        difficulty: settings.difficulty
+      });
       const scoreWasAdded = leaderboard.some((entry) => entry.id === entryId);
       pendingLeaderboardEntryId = scoreWasAdded ? entryId : null;
       saveLeaderboard();

@@ -143,6 +143,7 @@ export function applyPowerUp(powerUp, state) {
     paddle: { ...state.paddle },
     ball: { ...state.ball }
   };
+  const difficultyMultiplier = nextState.difficultyMultiplier || 1;
 
   if (powerUp.type === 'wide') {
     widenPaddle(nextState);
@@ -154,17 +155,17 @@ export function applyPowerUp(powerUp, state) {
   }
 
   if (powerUp.type === 'score') {
-    nextState.score = (nextState.score || 0) + 50;
+    nextState.score = (nextState.score || 0) + Math.round(50 * difficultyMultiplier);
   }
 
   if (powerUp.type === 'bonus') {
-    nextState.score = (nextState.score || 0) + 30;
+    nextState.score = (nextState.score || 0) + Math.round(30 * difficultyMultiplier);
     nextState.lightningTimer = 480;
     widenPaddle(nextState);
   }
 
   if (powerUp.type === 'multi') {
-    nextState.score = (nextState.score || 0) + 20;
+    nextState.score = (nextState.score || 0) + Math.round(20 * difficultyMultiplier);
     nextState.ball.vx = nextState.ball.vx * 1.12;
     nextState.ball.vy = nextState.ball.vy * 1.12;
   }
@@ -184,7 +185,7 @@ export function applyPowerUp(powerUp, state) {
   }
 
   if (powerUp.type === 'jackpot') {
-    nextState.score = (nextState.score || 0) + 100;
+    nextState.score = (nextState.score || 0) + Math.round(100 * difficultyMultiplier);
   }
 
   if (powerUp.type === 'focus') {
