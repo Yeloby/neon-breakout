@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'self'"
+    />
+    <title>Neon Breakout</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(34, 211, 238, 0.2), transparent 35%),
+          linear-gradient(135deg, #020617, #1d4ed8 50%, #111827);
+        color: #f8fafc;
+        display: grid;
+        place-items: center;
+        height: 100vh;
+        padding: 8px;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+      .game-shell {
+        box-sizing: border-box;
+        width: min(96vw, 520px);
+        max-height: calc(100vh - 16px);
+        background: rgba(2, 6, 23, 0.82);
+        backdrop-filter: blur(18px);
+        padding: 10px 14px;
+        border-radius: 24px;
+        box-shadow: 0 24px 80px rgba(2, 6, 23, 0.55);
+        border: 1px solid rgba(34, 211, 238, 0.23);
+      }
+      .title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        margin-bottom: 10px;
+        gap: 8px;
+      }
+      .title-row strong {
+        font-size: 1.1rem;
+        color: #7dd3fc;
+      }
+      .title-row span {
+        font-size: 0.8rem;
+        color: #bae6fd;
+      }
+      .title-row button {
+        padding: 7px 14px;
+      }
+      canvas {
+        display: block;
+        width: min(100%, calc((100vh - 230px) * 0.75));
+        height: auto;
+        margin: 0 auto;
+        border: 3px solid rgba(34, 211, 238, 0.95);
+        border-radius: 18px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 36px rgba(34, 211, 238, 0.18);
+      }
+      .hud {
+        margin-top: 7px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .stat-card {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 14px;
+        padding: 6px 9px;
+        border: 1px solid rgba(34, 211, 238, 0.2);
+        display: flex;
+        flex-direction: column;
+      }
+      .label {
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7dd3fc;
+      }
+      .stat-card strong {
+        font-size: 1rem;
+      }
+      .controls {
+        margin-top: 7px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #22d3ee, #38bdf8);
+        color: #082f49;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
+      }
+      .status {
+        color: #bfdbfe;
+        font-size: 0.92rem;
+        min-height: 24px;
+      }
+      .name-form {
+        display: flex;
+        gap: 8px;
+        margin: 7px 0 5px;
+      }
+      .name-form input {
+        flex: 1;
+        border: 1px solid rgba(34, 211, 238, 0.28);
+        border-radius: 999px;
+        padding: 8px 12px;
+        background: rgba(15, 23, 42, 0.9);
+        color: #f8fafc;
+      }
+      .leaderboard {
+        margin: 5px 0 7px;
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid rgba(34, 211, 238, 0.18);
+        border-radius: 14px;
+        padding: 7px 10px;
+      }
+      .leaderboard h3 {
+        margin: 0 0 6px;
+        font-size: 0.9rem;
+        color: #7dd3fc;
+      }
+      .leaderboard ol {
+        margin: 0;
+        padding-left: 0;
+        list-style: none;
+        color: #e2e8f0;
+        display: grid;
+        gap: 6px;
+      }
+      .leaderboard li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 7px;
+        border-radius: 10px;
+        background: rgba(8, 47, 73, 0.55);
+      }
+      .leaderboard .rank {
+        color: #facc15;
+        font-weight: 700;
+      }
+      dialog {
+        width: min(88vw, 480px);
+        height: min(620px, 82vh);
+        overflow: hidden;
+        border: 1px solid rgba(34, 211, 238, 0.4);
+        border-radius: 20px;
+        padding: 22px;
+        color: #f8fafc;
+        background: #071225;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.75);
+      }
+      dialog::backdrop {
+        background: rgba(1, 4, 11, 0.8);
+        backdrop-filter: blur(5px);
+      }
+      .menu-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .menu-header h2, .menu-section h3 {
+        margin: 0;
+        color: #7dd3fc;
+      }
+      .menu-section {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(34, 211, 238, 0.18);
+      }
+      .menu-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-top: 14px;
+      }
+      .menu-tabs button {
+        padding: 7px 4px;
+        font-size: 0.8rem;
+      }
+      .menu-panel {
+        display: none;
+      }
+      .menu-panel.active {
+        display: block;
+      }
+      .setting {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin: 12px 0;
+      }
+      select {
+        border: 1px solid rgba(34, 211, 238, 0.3);
+        border-radius: 10px;
+        padding: 7px 10px;
+        background: #0f172a;
+        color: #f8fafc;
+      }
+      .booster-list {
+        padding-left: 20px;
+        color: #cbd5e1;
+        line-height: 1.35;
+        columns: 2;
+        column-gap: 24px;
+      }
+      @media (max-width: 560px) {
+        .hud {
+          gap: 5px;
+        }
+        .stat-card {
+          padding: 5px;
+        }
+        .booster-list {
+          columns: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-shell">
+      <div class="title-row">
+        <strong>Neon Breakout</strong>
+        <button id="menuButton" type="button">Meny</button>
+      </div>
+      <canvas id="game" width="480" height="640"></canvas>
+      <div class="hud">
+        <div class="stat-card">
+          <span class="label">Poeng</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Rekord</span>
+          <strong id="highScore">0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Nivå</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Liv</span>
+          <strong id="lives">3</strong>
+        </div>
+      </div>
+      <div class="controls">
+        <div id="status" class="status">Klar til spill.</div>
+      </div>
+      <form id="nameForm" class="name-form" hidden>
+        <input id="playerName" type="text" maxlength="12" placeholder="Navn til poengtavlen" />
+        <button type="submit">Lagre navn</button>
+      </form>
+      <div class="controls">
+        <button id="restartButton" type="button">Start på nytt</button>
+      </div>
+    </div>
+    <dialog id="menuDialog">
+      <div class="menu-header">
+        <h2>Spillmeny</h2>
+        <button id="closeMenuButton" type="button">Lukk</button>
+      </div>
+      <nav class="menu-tabs" aria-label="Menyvalg">
+        <button type="button" data-menu-target="settingsPanel">Innstillinger</button>
+        <button type="button" data-menu-target="scoresPanel">Topp 10</button>
+        <button type="button" data-menu-target="boostersPanel">Boostere</button>
+        <button type="button" data-menu-target="aboutPanel">Om</button>
+      </nav>
+      <section id="settingsPanel" class="menu-section menu-panel active">
+        <h3>Innstillinger</h3>
+        <label class="setting">
+          <span>Vanskelighetsgrad</span>
+          <select id="difficultySelect">
+            <option value="easy">Lett</option>
+            <option value="normal">Normal</option>
+            <option value="hard">Vanskelig</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span>Lyd</span>
+          <input id="soundToggle" type="checkbox" />
+        </label>
+        <label class="setting">
+          <span>Visuelle effekter</span>
+          <input id="effectsToggle" type="checkbox" />
+        </label>
+        <small>Vanskelighetsgraden brukes fra neste nye spill.</small>
+      </section>
+      <section id="scoresPanel" class="menu-section menu-panel leaderboard">
+        <h3>Hele poenglisten</h3>
+        <ol id="menuLeaderboard"></ol>
+      </section>
+      <section id="boostersPanel" class="menu-section menu-panel">
+        <h3>Boostere</h3>
+        <ul class="booster-list">
+          <li>❤️ Ekstraliv (maks fem)</li>
+          <li>2️⃣ Doble poeng i 10 sekunder</li>
+          <li>🧲 Fanger ballen for ny sikting</li>
+          <li>🔥 Ildball går gjennom fem klosser</li>
+          <li>🛡️ Skjold redder én tapt ball</li>
+          <li>↔️ Gjør padelen bredere</li>
+          <li>🐢 Gjør ballen roligere</li>
+          <li>🎯 Gir ballen en mer kontrollert bane</li>
+          <li>💎 Gir 50 bonuspoeng</li>
+          <li>⚡ Gir poeng og bredere paddle</li>
+          <li>🚀 Gir turbo og bonuspoeng</li>
+          <li>🪶 Demper ballens fart</li>
+          <li>🎰 Gir 100 jackpotpoeng</li>
+        </ul>
+      </section>
+      <section id="aboutPanel" class="menu-section menu-panel">
+        <h3>Om Neon Breakout</h3>
+        <p>Versjon 1.1.0</p>
+        <p>Linux-spill bygget med Electron 43</p>
+        <p>Utvikler og © 2026: Johan Slåttavik</p>
+      </section>
+    </dialog>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

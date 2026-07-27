@@ -1,0 +1,65 @@
+{
+  "name": "neon-breakout",
+  "version": "1.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/Yeloby/neon-breakout",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yeloby/neon-breakout.git"
+  },
+  "desktopName": "neon-breakout.desktop",
+  "description": "Et fargerikt og moderne Breakout-spill for Linux",
+  "author": {
+    "name": "Johan Slåttavik"
+  },
+  "type": "module",
+  "main": "electron-main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "test": "node --test",
+    "start": "electron .",
+    "build:linux": "electron-builder --linux",
+    "build:dir": "electron-builder --linux dir"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.8"
+  },
+  "build": {
+    "appId": "com.neonbreakout.desktop",
+    "productName": "Neon Breakout",
+    "copyright": "Copyright © 2026 Johan Slåttavik",
+    "files": [
+      "index.html",
+      "main.js",
+      "breakoutGameLogic.js",
+      "electron-main.js",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm",
+        "tar.gz"
+      ],
+      "category": "Game",
+      "synopsis": "Neon Breakout",
+      "description": "Et fargerikt og moderne Breakout-spill for Linux.",
+      "maintainer": "Johan Slåttavik",
+      "syncDesktopName": true
+    },
+    "deb": {
+      "packageCategory": "games"
+    },
+    "rpm": {
+      "packageCategory": "Amusements/Games"
+    }
+  }
+}
