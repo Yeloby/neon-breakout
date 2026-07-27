@@ -79,12 +79,56 @@ export function resolveBrickCollision(ball, brick) {
 
 export function getLevelLayout(level, cols, rows) {
   const layout = Array.from({ length: rows }, () => Array(cols).fill(0));
-  const pattern = level % 2 === 0 ? 1 : 0;
+  const pattern = ((level - 1) % 12 + 12) % 12;
+  const centerCol = (cols - 1) / 2;
+  const centerRow = (rows - 1) / 2;
 
   for (let row = 0; row < rows; row += 1) {
     for (let col = 0; col < cols; col += 1) {
-      const offset = (row + col + pattern) % 3;
-      layout[row][col] = offset === 0 ? 1 : 0;
+      const normalizedCol = Math.abs(col - centerCol) / Math.max(1, centerCol);
+      const normalizedRow = Math.abs(row - centerRow) / Math.max(1, centerRow);
+      let occupied = false;
+
+      switch (pattern) {
+        case 0: // Klassisk vegg
+          occupied = true;
+          break;
+        case 1: // Sjakkbrett
+          occupied = (row + col) % 2 === 0;
+          break;
+        case 2: // Pyramide
+          occupied = normalizedCol <= (row + 1) / rows;
+          break;
+        case 3: // Omvendt pyramide
+          occupied = normalizedCol <= (rows - row) / rows;
+          break;
+        case 4: // Diamant
+          occupied = normalizedCol + normalizedRow <= 1.15;
+          break;
+        case 5: // Ramme
+          occupied = row === 0 || row === rows - 1 || col === 0 || col === cols - 1;
+          break;
+        case 6: // Sikksakk
+          occupied = (col + row * 2) % 4 < 2;
+          break;
+        case 7: // Kryss
+          occupied = Math.abs(col - centerCol) < 1 || Math.abs(row - centerRow) < 1;
+          break;
+        case 8: // Festning med porter
+          occupied = row < 2 || col % 3 !== 1 || row === rows - 1;
+          break;
+        case 9: // Bølger
+          occupied = (row + Math.floor(col / 2)) % 3 !== 2;
+          break;
+        case 10: // Fire øyer
+          occupied = normalizedCol > 0.28 && normalizedRow > 0.2;
+          break;
+        case 11: // Pilspiss
+          occupied = Math.abs(row - centerRow) <= Math.abs(col - centerCol) * 0.55;
+          break;
+      }
+
+      layout[row][col] = occupied ? 1 : 0;
     }
   }
 
@@ -101,12 +145,12 @@ export function applyPowerUp(powerUp, state) {
   };
 
   if (powerUp.type === 'wide') {
-    nextState.paddle.width = Math.min(160, nextState.paddle.width + 32);
+    widenPaddle(nextState);
   }
 
   if (powerUp.type === 'slow') {
-    nextState.ball.vx = scaleVelocity(nextState.ball.vx, 0.8, 2);
-    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.8, 2);
+    nextState.ball.vx = scaleVelocity(nextState.ball.vx, 0.55, 1.8);
+    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.55, 1.8);
   }
 
   if (powerUp.type === 'score') {
@@ -115,7 +159,8 @@ export function applyPowerUp(powerUp, state) {
 
   if (powerUp.type === 'bonus') {
     nextState.score = (nextState.score || 0) + 30;
-    nextState.paddle.width = Math.min(160, nextState.paddle.width + 16);
+    nextState.lightningTimer = 480;
+    widenPaddle(nextState);
   }
 
   if (powerUp.type === 'multi') {
@@ -129,8 +174,8 @@ export function applyPowerUp(powerUp, state) {
   }
 
   if (powerUp.type === 'gravity') {
-    nextState.ball.vx = nextState.ball.vx * 0.9;
-    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.9, 2);
+    nextState.ball.vx = scaleVelocity(nextState.ball.vx, 0.72, 2);
+    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.72, 2);
   }
 
   if (powerUp.type === 'double') {
@@ -160,6 +205,24 @@ export function applyPowerUp(powerUp, state) {
   }
 
   return nextState;
+}
+
+function widenPaddle(state) {
+  const maximumWidth = state.maxPaddleWidth || 160;
+  const startingWidth = state.startingPaddleWidth || state.paddle.width;
+  const widthStep = (maximumWidth - startingWidth) / 5;
+  state.paddle.width = Math.min(maximumWidth, state.paddle.width + widthStep);
+}
+
+export function calculateBrickScore({
+  combo = 0,
+  scoreMultiplier = 1,
+  difficultyMultiplier = 1,
+  lightningActive = false
+} = {}) {
+  const comboMultiplier = 1 + Math.floor(combo / 3) * 0.5;
+  const lightningMultiplier = lightningActive ? 1.5 : 1;
+  return Math.round(10 * comboMultiplier * scoreMultiplier * difficultyMultiplier * lightningMultiplier);
 }
 
 function scaleVelocity(velocity, factor, minimumMagnitude) {

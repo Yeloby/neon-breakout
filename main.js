@@ -1,4 +1,4 @@
-import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, collideWithPaddle, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
+import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -24,15 +24,17 @@ const HEIGHT = canvas.height;
 const PADDLE_HEIGHT = 14;
 const PADDLE_Y = HEIGHT - 36;
 const BALL_RADIUS = 6;
+const MAX_PADDLE_WIDTH = 160;
+const POWER_UP_RADIUS = 18;
 const BRICK_ROWS = 5;
 const BRICK_COLS = 8;
 const BRICK_WIDTH = 46;
 const BRICK_HEIGHT = 20;
 const BRICK_GAP = 8;
 const DIFFICULTIES = {
-  easy: { paddleWidth: 108, speedScale: 0.88, maxSpeed: 5.8, boosterChance: 0.38 },
-  normal: { paddleWidth: 88, speedScale: 1, maxSpeed: 6.5, boosterChance: 0.32 },
-  hard: { paddleWidth: 72, speedScale: 1.12, maxSpeed: 7.2, boosterChance: 0.26 }
+  easy: { paddleWidth: 108, launchSpeed: 4.6, maxSpeed: 5.4, scoreMultiplier: 0.8, boosterChance: 0.38 },
+  normal: { paddleWidth: 88, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
+  hard: { paddleWidth: 72, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
 };
 const settings = loadSettings();
 
@@ -51,6 +53,7 @@ let combo = 0;
 let comboTimer = 0;
 let scoreMultiplier = 1;
 let multiplierTimer = 0;
+let lightningTimer = 0;
 let catchCharges = 0;
 let piercingHits = 0;
 let shieldCharges = 0;
@@ -270,6 +273,7 @@ function resetGame() {
   comboTimer = 0;
   scoreMultiplier = 1;
   multiplierTimer = 0;
+  lightningTimer = 0;
   catchCharges = 0;
   piercingHits = 0;
   shieldCharges = 0;
@@ -367,15 +371,16 @@ function drawPaddle() {
 function drawBall() {
   const glow = 1 + Math.sin(ballPulse) * 0.12;
   const fireballActive = piercingHits > 0;
+  const lightningActive = lightningTimer > 0;
   const drawRadius = fireballActive ? ball.radius * 1.45 : ball.radius;
   const gradient = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 2, ball.x, ball.y, drawRadius * glow);
   gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(0.3, fireballActive ? '#fde047' : '#fef3c7');
-  gradient.addColorStop(1, fireballActive ? '#f97316' : '#fb7185');
+  gradient.addColorStop(0.3, fireballActive || lightningActive ? '#fde047' : '#fef3c7');
+  gradient.addColorStop(1, fireballActive ? '#f97316' : lightningActive ? '#a855f7' : '#fb7185');
   ctx.save();
-  if (fireballActive) {
-    ctx.shadowColor = '#fb923c';
-    ctx.shadowBlur = 18;
+  if (fireballActive || lightningActive) {
+    ctx.shadowColor = fireballActive ? '#fb923c' : '#fde047';
+    ctx.shadowBlur = lightningActive ? 24 : 18;
   }
   ctx.fillStyle = gradient;
   ctx.beginPath();
@@ -406,7 +411,7 @@ function drawBallTrail() {
   if (!settings.effects) return;
   ballTrail.forEach((point) => {
     ctx.globalAlpha = point.life / point.maxLife;
-    ctx.fillStyle = piercingHits > 0 ? '#fb923c' : '#7dd3fc';
+    ctx.fillStyle = piercingHits > 0 ? '#fb923c' : lightningTimer > 0 ? '#fde047' : '#7dd3fc';
     ctx.beginPath();
     ctx.arc(point.x, point.y, ball.radius * (point.life / point.maxLife), 0, Math.PI * 2);
     ctx.fill();
@@ -463,14 +468,14 @@ function drawPowerUps() {
     ctx.save();
     ctx.translate(powerUp.x, powerUp.y);
     ctx.shadowColor = powerUp.color;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = powerUp.type === 'bonus' ? 22 : 14;
     ctx.fillStyle = powerUp.color;
     ctx.beginPath();
-    ctx.arc(0, 0, 15, 0, Math.PI * 2);
+    ctx.arc(0, 0, POWER_UP_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff';
-    ctx.font = '19px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.font = '24px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(powerUp.symbol, 0, 0);
@@ -520,19 +525,21 @@ function updateParticles() {
   if (comboTimer === 0) combo = 0;
   multiplierTimer = Math.max(0, multiplierTimer - 1);
   if (multiplierTimer === 0) scoreMultiplier = 1;
+  lightningTimer = Math.max(0, lightningTimer - 1);
 }
 
 function updatePowerUps() {
   for (let i = powerUps.length - 1; i >= 0; i -= 1) {
     const powerUp = powerUps[i];
     powerUp.y += powerUp.vy;
-    const powerUpRadius = 15;
+    const powerUpRadius = POWER_UP_RADIUS;
     if (
       powerUp.y + powerUpRadius >= paddle.y &&
       powerUp.y - powerUpRadius <= paddle.y + paddle.height &&
       powerUp.x + powerUpRadius >= paddle.x &&
       powerUp.x - powerUpRadius <= paddle.x + paddle.width
     ) {
+      const speedBeforePowerUp = Math.hypot(ball.vx, ball.vy);
       const updated = applyPowerUp(powerUp, {
         paddle,
         ball,
@@ -540,6 +547,9 @@ function updatePowerUps() {
         lives,
         scoreMultiplier,
         multiplierTimer,
+        lightningTimer,
+        startingPaddleWidth: DIFFICULTIES[settings.difficulty].paddleWidth,
+        maxPaddleWidth: MAX_PADDLE_WIDTH,
         catchCharges,
         piercingHits,
         shieldCharges
@@ -552,12 +562,28 @@ function updatePowerUps() {
       lives = typeof updated.lives === 'number' ? updated.lives : lives;
       scoreMultiplier = updated.scoreMultiplier || scoreMultiplier;
       multiplierTimer = updated.multiplierTimer || multiplierTimer;
+      lightningTimer = updated.lightningTimer || lightningTimer;
       catchCharges = updated.catchCharges ?? catchCharges;
       piercingHits = updated.piercingHits ?? piercingHits;
       shieldCharges = updated.shieldCharges ?? shieldCharges;
       spawnImpactFeedback(powerUp.x, powerUp.y - 10, powerUp.symbol, powerUp.color, true);
+      if (powerUp.type === 'slow' || powerUp.type === 'gravity') {
+        const speedAfterPowerUp = Math.hypot(ball.vx, ball.vy);
+        const remainingPercent = Math.round((speedAfterPowerUp / Math.max(0.01, speedBeforePowerUp)) * 100);
+        const effectName = powerUp.type === 'slow' ? 'SKILPADDEFART' : 'SVEVEFART';
+        statusEl.textContent = powerUp.type === 'slow'
+          ? 'Skilpadde: ballen er kraftig bremset.'
+          : 'Fjær: ballen svever merkbart saktere.';
+        spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, `${effectName} ${remainingPercent} %`, powerUp.color, false, 90);
+        playTone(powerUp.type === 'slow' ? 190 : 310, 0.18, 'sine');
+      }
       if (powerUp.type === 'multi') {
         playTone(980, 0.08, 'triangle');
+      }
+      if (powerUp.type === 'bonus') {
+        spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, 'LYNENERGI!', '#fde047', false, 90);
+        shockwaves.push({ x: ball.x, y: ball.y, radius: 8, life: 42, maxLife: 42, color: '#fde047' });
+        playTone(1240, 0.18, 'sawtooth');
       }
       powerUps.splice(i, 1);
       playTone(820, 0.1, 'triangle');
@@ -572,9 +598,8 @@ function launchBall() {
   if (ballLaunched) return;
   const targetX = pointerAim?.x ?? paddle.x + paddle.width / 2;
   const targetY = pointerAim?.y ?? 0;
-  const distance = Math.max(1, Math.hypot(targetX - ball.x, targetY - ball.y));
   const difficulty = DIFFICULTIES[settings.difficulty];
-  const launchSpeed = Math.min(7, 3.2 + distance / 85) * difficulty.speedScale;
+  const launchSpeed = difficulty.launchSpeed;
   const nextVelocity = getLaunchVelocityFromPointer(targetX, targetY, ball.x, ball.y, launchSpeed);
   ball.vx = nextVelocity.vx;
   ball.vy = nextVelocity.vy;
@@ -641,8 +666,12 @@ function updateBall() {
     if (result.hit) {
       combo += 1;
       comboTimer = 90;
-      const comboMultiplier = 1 + Math.floor(combo / 3) * 0.5;
-      const earnedScore = Math.round(10 * comboMultiplier * scoreMultiplier);
+      const earnedScore = calculateBrickScore({
+        combo,
+        scoreMultiplier,
+        difficultyMultiplier: DIFFICULTIES[settings.difficulty].scoreMultiplier,
+        lightningActive: lightningTimer > 0
+      });
       score += earnedScore;
       brick.alive = false;
       spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color);
@@ -652,6 +681,16 @@ function updateBall() {
         `+${earnedScore}`,
         brick.color
       );
+      if (lightningTimer > 0) {
+        shockwaves.push({
+          x: brick.x + brick.width / 2,
+          y: brick.y + brick.height / 2,
+          radius: 5,
+          life: 32,
+          maxLife: 32,
+          color: '#fde047'
+        });
+      }
       if (Math.random() < DIFFICULTIES[settings.difficulty].boosterChance) {
         spawnPowerUp(brick.x + brick.width / 2, brick.y + brick.height / 2);
       }
@@ -735,7 +774,6 @@ function updateBall() {
     ball.y = paddle.y - 10;
     ball.vx = 0;
     ball.vy = 0;
-    paddle.width = Math.max(60, paddle.width - 4);
     statusEl.textContent = `Nivå ${level} klart! Klikk på banen for å skyte ballen.`;
     playTone(940, 0.12, 'sine');
   }
@@ -766,6 +804,17 @@ function draw() {
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(`DOBLE POENG ${Math.ceil(multiplierTimer / 60)}s`, WIDTH - 20, 28);
+    ctx.restore();
+  }
+
+  if (lightningTimer > 0) {
+    ctx.save();
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 10;
+    ctx.fillText(`⚡ LYNENERGI +50 %  ${Math.ceil(lightningTimer / 60)}s`, WIDTH / 2, 48);
     ctx.restore();
   }
 

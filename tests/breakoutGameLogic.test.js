@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addLeaderboardEntry, bounceOffWalls, collideWithPaddle, resolveBrickCollision, getLevelLayout, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
+import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getLevelLayout, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
 
 test('bounceOffWalls reverses horizontal velocity when the ball hits a vertical wall', () => {
   const ball = { x: 6, y: 40, radius: 6, vx: -4, vy: 2 };
@@ -56,14 +56,34 @@ test('getLevelLayout creates a different pattern for later levels', () => {
   assert.equal(levelOne.filter((row) => row.some(Boolean)).length > 0, true);
 });
 
-test('applyPowerUp widens the paddle and slows the ball', () => {
-  const state = { paddle: { width: 80 }, ball: { vx: 4, vy: -4 }, score: 0 };
+test('getLevelLayout cycles through twelve distinct block formations', () => {
+  const layouts = Array.from({ length: 12 }, (_, index) => getLevelLayout(index + 1, 8, 5));
+  const serializedLayouts = new Set(layouts.map((layout) => JSON.stringify(layout)));
+  const blockCounts = new Set(layouts.map((layout) => layout.flat().filter(Boolean).length));
 
-  const updated = applyPowerUp({ type: 'wide' }, state);
-  const slowed = applyPowerUp({ type: 'slow' }, updated);
+  assert.equal(serializedLayouts.size, 12);
+  assert.equal(blockCounts.size >= 6, true);
+  assert.equal(layouts.every((layout) => layout.flat().some(Boolean)), true);
+  assert.deepEqual(getLevelLayout(13, 8, 5), layouts[0]);
+});
 
-  assert.equal(slowed.paddle.width, 112);
-  assert.equal(slowed.ball.vx < 4, true);
+test('five width powerups grow the paddle from its starting width to its maximum', () => {
+  const state = {
+    paddle: { width: 80 },
+    ball: { vx: 4, vy: -4 },
+    score: 0,
+    startingPaddleWidth: 80,
+    maxPaddleWidth: 160
+  };
+
+  let updated = state;
+  for (let index = 0; index < 5; index += 1) {
+    updated = applyPowerUp({ type: 'wide' }, updated);
+  }
+  const capped = applyPowerUp({ type: 'wide' }, updated);
+
+  assert.equal(updated.paddle.width, 160);
+  assert.equal(capped.paddle.width, 160);
 });
 
 test('applyPowerUp adds bonus score for score powerups', () => {
@@ -79,8 +99,19 @@ test('applyPowerUp slows the ball without changing its direction', () => {
 
   const updated = applyPowerUp({ type: 'slow' }, state);
 
-  assert.equal(updated.ball.vx, -3.2);
-  assert.equal(updated.ball.vy, 3.2);
+  assert.equal(updated.ball.vx, -2.2);
+  assert.equal(updated.ball.vy, 2.2);
+});
+
+test('turtle slows the ball more strongly than feather', () => {
+  const state = { paddle: { width: 80 }, ball: { vx: 6, vy: -6 }, score: 0 };
+
+  const turtle = applyPowerUp({ type: 'slow' }, state);
+  const feather = applyPowerUp({ type: 'gravity' }, state);
+
+  assert.equal(Math.hypot(turtle.ball.vx, turtle.ball.vy) < Math.hypot(feather.ball.vx, feather.ball.vy), true);
+  assert.equal(turtle.ball.vx, 3.3000000000000003);
+  assert.equal(feather.ball.vx, 4.32);
 });
 
 test('applyPowerUp grants a shield charge and speeds up the ball for turbo pickups', () => {
@@ -169,6 +200,34 @@ test('double and jackpot powerups provide distinct score rewards', () => {
   assert.equal(doubled.scoreMultiplier, 2);
   assert.equal(doubled.multiplierTimer, 600);
   assert.equal(jackpot.score, 120);
+});
+
+test('lightning powerup starts an eight-second scoring effect and widens by one step', () => {
+  const state = {
+    paddle: { width: 80 },
+    ball: { vx: 4, vy: -4 },
+    score: 20,
+    startingPaddleWidth: 80,
+    maxPaddleWidth: 160
+  };
+
+  const electrified = applyPowerUp({ type: 'bonus' }, state);
+
+  assert.equal(electrified.lightningTimer, 480);
+  assert.equal(electrified.paddle.width, 96);
+  assert.equal(electrified.score, 50);
+});
+
+test('brick scores scale with difficulty, combo, double points and lightning', () => {
+  assert.equal(calculateBrickScore({ difficultyMultiplier: 0.8 }), 8);
+  assert.equal(calculateBrickScore({ difficultyMultiplier: 1 }), 10);
+  assert.equal(calculateBrickScore({ difficultyMultiplier: 1.4 }), 14);
+  assert.equal(calculateBrickScore({
+    combo: 3,
+    scoreMultiplier: 2,
+    difficultyMultiplier: 1.4,
+    lightningActive: true
+  }), 63);
 });
 
 test('catch and fireball powerups grant limited-use abilities', () => {
