@@ -11,7 +11,7 @@ bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
 - Komboer, poengeffekter og nivåfeiring
 - Lokal topp 10-liste med spillernavn
 - Innstillinger for lyd og visuelle effekter
-- Responsivt grensesnitt uten scrolling
+- Responsivt grensesnitt
 - Tastatur-, mus- og pekerstyring
 
 ## Krav for utvikling
