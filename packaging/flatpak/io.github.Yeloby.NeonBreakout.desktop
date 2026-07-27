@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Neon Breakout
+Comment=Et fargerikt og moderne Breakout-spill
+Exec=neon-breakout
+Terminal=false
+Type=Application
+Categories=Game;ArcadeGame;
+StartupNotify=true
+StartupWMClass=Neon Breakout

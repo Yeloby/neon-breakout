@@ -53,6 +53,7 @@ Ferdige filer legges i `dist/`:
 - `.AppImage` for bred Linux-kompatibilitet
 - `.deb` for Debian-baserte distribusjoner
 - `.rpm` for RPM-baserte distribusjoner
+- `.flatpak` for distribusjoner med Flatpak
 - `.tar.gz` som portabel utgave
 
 ### AppImage
@@ -64,15 +65,33 @@ chmod +x "dist/Neon Breakout-1.1.0.AppImage"
 
 ### Debian-pakke
 
+Den nedlastede `.deb`-pakken installeres med APT, som også henter eventuelle
+systemavhengigheter:
+
 ```bash
 sudo apt install ./dist/neon-breakout_1.1.0_amd64.deb
 ```
+
+Et eget APT-arkiv er ikke nødvendig for denne enkeltpakken. Det unngår også at
+brukeren må stole på en ekstra pakkekilde og signeringsnøkkel.
 
 ### RPM-pakke
 
 ```bash
 sudo dnf install ./dist/neon-breakout-1.1.0.x86_64.rpm
 ```
+
+### Flatpak
+
+Last ned `.flatpak`-filen fra GitHub-utgivelsen og installer den:
+
+```bash
+flatpak install ./Neon-Breakout-1.1.0.flatpak
+flatpak run io.github.Yeloby.NeonBreakout
+```
+
+Dette er en selvstendig Flatpak-pakke. Publisering i Flathub krever i tillegg
+en separat innsending og godkjenning hos Flathub.
 
 ### Portabel utgave
 
