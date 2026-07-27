@@ -5,13 +5,17 @@
 Neon Breakout er et fargerikt, moderne Breakout-spill for Linux. Spillet er
 bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
 
+[Last ned nyeste Linux-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest)
+
 ## Funksjoner
 
-- Tre vanskelighetsgrader
+- Tre vanskelighetsgrader med ulik ballfart og poengskalering
+- Tolv varierte blokkformasjoner med ulik størrelse og tetthet
 - Tre startliv og sjeldne ekstraliv
-- Tretten balanserte boostere
+- Tretten boostere med trinnvis padelbredde og tydelige fartseffekter
+- Lynenergi med bonuspoeng, elektrisk ballspor og nedtelling
 - Komboer, poengeffekter og nivåfeiring
-- Lokal topp 10-liste med spillernavn
+- Lokal topp 10-liste med spillernavn og vanskelighetsgrad
 - Innstillinger for lyd og visuelle effekter
 - Responsivt grensesnitt
 - Tastatur-, mus- og pekerstyring
