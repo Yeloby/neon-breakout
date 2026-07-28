@@ -33,11 +33,20 @@ sudo apt update
 sudo apt install neon-breakout
 ```
 
-### Arch Linux og andre distribusjoner
+### Arch Linux
+
+Installer fra AUR med for eksempel:
+
+```bash
+yay -S neon-breakout-bin
+```
+
+### Andre distribusjoner
 
 Flatpak fungerer på tvers av distribusjoner:
 
 **[Åpne i COSMIC Store, GNOME Software eller Discover](https://yeloby.github.io/neon-breakout/flatpak/neon-breakout.flatpakref)**
+· **[Åpne i Snap Store](https://snapcraft.io/neon-breakout)**
 
 Eller installer fra terminalen:
 
@@ -64,6 +73,9 @@ sudo apt update && sudo apt upgrade
 
 # Flatpak
 flatpak update
+
+# Arch Linux / AUR
+yay -Syu
 ```
 
 Manuelt installerte RPM- og AppImage-utgaver erstattes med pakken fra
