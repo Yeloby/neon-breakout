@@ -1,0 +1,8 @@
+Package: yeloby-archive-keyring
+Version: 1.0.0
+Section: misc
+Priority: optional
+Architecture: all
+Maintainer: Johan Slåttavik
+Description: Signing key and APT source for Yeloby games
+ Installs the signing key and package source used by Yeloby games.

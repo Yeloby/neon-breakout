@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -61,6 +63,7 @@ jobs:
             dist/*.tar.gz
             dist/*.flatpak
             dist/latest-linux.yml
+            flatpak-repo/**
           if-no-files-found: error
 
       - name: Publiser versjonert utgivelse
@@ -78,3 +81,100 @@ jobs:
               --generate-notes \
               --title "Neon Breakout ${GITHUB_REF_NAME}"
           fi
+
+  publish-apt:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Hent kildekoden
+        uses: actions/checkout@v4
+
+      - name: Hent Linux-pakkene
+        uses: actions/download-artifact@v4
+        with:
+          name: neon-breakout-linux-${{ github.sha }}
+          path: dist
+
+      - name: Installer arkivverktøy
+        run: sudo apt-get update && sudo apt-get install -y apt-utils dpkg-dev flatpak gnupg
+
+      - name: Bygg signert Yeloby APT-arkiv
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: |
+          if [ -z "${APT_GPG_PRIVATE_KEY}" ]; then
+            echo "::error::APT_GPG_PRIVATE_KEY må legges inn som GitHub Actions-secret."
+            exit 1
+          fi
+
+          export GNUPGHOME="${RUNNER_TEMP}/yeloby-gnupg"
+          mkdir -m 700 "${GNUPGHOME}"
+          gpg --batch --import <<<"${APT_GPG_PRIVATE_KEY}"
+          APT_SIGNING_KEY="$(gpg --batch --with-colons --list-secret-keys | awk -F: '$1 == "fpr" { print $10; exit }')"
+
+          mkdir -p \
+            site/apt/dists/stable/main/binary-amd64 \
+            site/apt/pool/main/n/neon-breakout \
+            site/apt/pool/main/y/yeloby-archive-keyring
+          cp dist/*.deb site/apt/pool/main/n/neon-breakout/
+          gpg --batch --yes --export "${APT_SIGNING_KEY}" > site/apt/yeloby-archive-keyring.gpg
+
+          mkdir -p keyring-package/DEBIAN keyring-package/usr/share/keyrings keyring-package/etc/apt/sources.list.d
+          cp site/apt/yeloby-archive-keyring.gpg keyring-package/usr/share/keyrings/yeloby-archive-keyring.gpg
+          cp packaging/apt/yeloby.sources keyring-package/etc/apt/sources.list.d/yeloby.sources
+          cp packaging/apt/keyring-control keyring-package/DEBIAN/control
+          dpkg-deb --root-owner-group --build keyring-package site/apt/yeloby-archive-keyring.deb
+          cp site/apt/yeloby-archive-keyring.deb site/apt/pool/main/y/yeloby-archive-keyring/
+
+          cd site/apt
+          apt-ftparchive packages pool > dists/stable/main/binary-amd64/Packages
+          gzip -9 -k -f dists/stable/main/binary-amd64/Packages
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin="Yeloby" \
+            -o APT::FTPArchive::Release::Label="Yeloby Games" \
+            -o APT::FTPArchive::Release::Suite="stable" \
+            -o APT::FTPArchive::Release::Codename="stable" \
+            -o APT::FTPArchive::Release::Architectures="amd64" \
+            -o APT::FTPArchive::Release::Components="main" \
+            -o APT::FTPArchive::Release::Description="Relaxing games for everyone" \
+            release dists/stable > dists/stable/Release
+          gpg --batch --yes --local-user "${APT_SIGNING_KEY}" \
+            --clearsign --output dists/stable/InRelease dists/stable/Release
+          gpg --batch --yes --local-user "${APT_SIGNING_KEY}" \
+            --detach-sign --armor --output dists/stable/Release.gpg dists/stable/Release
+
+          cd "${GITHUB_WORKSPACE}"
+          cp -a flatpak-repo site/flatpak
+          flatpak build-update-repo \
+            --gpg-sign="${APT_SIGNING_KEY}" \
+            --gpg-homedir="${GNUPGHOME}" \
+            site/flatpak
+          YELOBY_GPG_KEY="$(base64 -w 0 site/apt/yeloby-archive-keyring.gpg)"
+          printf '%s\n' \
+            '[Flatpak Repo]' \
+            'Title=Yeloby Games' \
+            'Comment=Relaxing games for everyone' \
+            'Description=Yeloby games with neon, imagination and emoji magic' \
+            'Url=https://yeloby.github.io/neon-breakout/flatpak/' \
+            'Homepage=https://github.com/Yeloby' \
+            "GPGKey=${YELOBY_GPG_KEY}" \
+            > site/flatpak/yeloby.flatpakrepo
+
+      - name: Klargjør GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Last opp Yeloby APT-side
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publiser Yeloby APT-arkiv
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages

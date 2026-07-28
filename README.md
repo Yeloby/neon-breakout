@@ -77,15 +77,18 @@ chmod +x "dist/Neon Breakout-1.4.3.AppImage"
 
 ### Debian-pakke
 
-Den nedlastede `.deb`-pakken installeres med APT, som også henter eventuelle
-systemavhengigheter:
+Den anbefalte installasjonen bruker det signerte Yeloby-arkivet:
 
 ```bash
-sudo apt install ./dist/neon-breakout_1.4.3_amd64.deb
+curl -fLO https://yeloby.github.io/neon-breakout/apt/yeloby-archive-keyring.deb
+sudo apt install ./yeloby-archive-keyring.deb
+sudo apt update
+sudo apt install neon-breakout
 ```
 
-Et eget APT-arkiv er ikke nødvendig for denne enkeltpakken. Det unngår også at
-brukeren må stole på en ekstra pakkekilde og signeringsnøkkel.
+Deretter kommer nye versjoner gjennom vanlig `sudo apt update` og
+`sudo apt upgrade`. En enkeltstående `.deb` kan fortsatt lastes ned fra GitHub
+Releases og installeres med `sudo apt install ./pakkenavn.deb`.
 
 ### RPM-pakke
 
@@ -95,15 +98,18 @@ sudo dnf install ./dist/neon-breakout-1.4.3.x86_64.rpm
 
 ### Flatpak
 
-Last ned `.flatpak`-filen fra GitHub-utgivelsen og installer den:
+Dette er den anbefalte installasjonen for Arch Linux, Fedora, openSUSE og andre
+distribusjoner. Legg til Yeloby-kilden én gang:
 
 ```bash
-flatpak install ./Neon-Breakout-1.4.3.flatpak
-flatpak run io.github.Yeloby.NeonBreakout
+flatpak remote-add --if-not-exists yeloby \
+  https://yeloby.github.io/neon-breakout/flatpak/yeloby.flatpakrepo
+flatpak install yeloby io.github.Yeloby.NeonBreakout
 ```
 
-Dette er en selvstendig Flatpak-pakke. Publisering i Flathub krever i tillegg
-en separat innsending og godkjenning hos Flathub.
+Nye versjoner installeres med vanlig `flatpak update`. På Arch Linux kan
+Flatpak installeres først med `sudo pacman -S flatpak`. Den enkeltstående
+`.flatpak`-filen er fortsatt tilgjengelig i GitHub Releases.
 
 ### Portabel utgave
 
