@@ -14,6 +14,7 @@
   <developer id="io.github.yeloby">
     <name>Johan Slåttavik</name>
   </developer>
+  <developer_name>Johan Slåttavik</developer_name>
   <url type="homepage">https://github.com/Yeloby/neon-breakout</url>
   <url type="bugtracker">https://github.com/Yeloby/neon-breakout/issues</url>
   <categories>

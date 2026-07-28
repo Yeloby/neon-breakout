@@ -61,7 +61,7 @@ jobs:
 
       - name: Bygg Flatpak-pakke
         run: |
-          flatpak-builder --user --force-clean --repo=flatpak-repo flatpak-build packaging/flatpak/io.github.Yeloby.NeonBreakout.yml
+          flatpak-builder --user --force-clean --disable-cache --repo=flatpak-repo flatpak-build packaging/flatpak/io.github.Yeloby.NeonBreakout.yml
           flatpak build-bundle flatpak-repo dist/Neon-Breakout-${GITHUB_REF_NAME#v}.flatpak io.github.Yeloby.NeonBreakout
 
       - name: Last opp byggeartefakter
