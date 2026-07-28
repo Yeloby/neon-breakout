@@ -29,6 +29,57 @@
         box-sizing: border-box;
         overflow: hidden;
       }
+      .start-screen {
+        position: relative;
+        width: min(96vw, 900px);
+        aspect-ratio: 2 / 1;
+        overflow: hidden;
+        border: 2px solid rgba(125, 211, 252, 0.72);
+        border-radius: 24px;
+        background: #020617;
+        box-shadow: 0 28px 100px rgba(0, 0, 0, 0.7), 0 0 42px rgba(236, 72, 153, 0.2);
+      }
+      .start-screen::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(to bottom, rgba(2, 6, 23, 0.08) 45%, rgba(2, 6, 23, 0.82));
+      }
+      .start-cover {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .start-content {
+        position: absolute;
+        z-index: 1;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding: clamp(14px, 4vw, 34px);
+        box-sizing: border-box;
+      }
+      .yeloby-mark {
+        font-weight: 900;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #f8fafc;
+        text-shadow: 2px 2px #db2777, 0 0 14px #22d3ee;
+      }
+      .start-brand {
+        margin-bottom: 8px;
+        font-size: clamp(0.68rem, 1.7vw, 0.9rem);
+      }
+      .start-button {
+        min-width: 150px;
+        padding: 11px 28px;
+        font-size: 1.05rem;
+        border: 2px solid rgba(255,255,255,0.75);
+        box-shadow: 0 0 24px rgba(34, 211, 238, 0.65), 5px 5px 0 #db2777;
+      }
       .game-shell {
         box-sizing: border-box;
         width: min(96vw, 520px);
@@ -43,13 +94,20 @@
       .title-row {
         display: flex;
         justify-content: space-between;
-        align-items: end;
-        margin-bottom: 10px;
+        align-items: center;
+        min-height: 58px;
+        margin-bottom: 6px;
         gap: 8px;
       }
-      .title-row strong {
-        font-size: 1.1rem;
-        color: #7dd3fc;
+      .title-brand {
+        margin-left: auto;
+        font-size: 0.62rem;
+      }
+      .game-logo {
+        display: block;
+        width: 108px;
+        height: auto;
+        filter: drop-shadow(0 3px 5px rgba(236, 72, 153, 0.5));
       }
       .title-row span {
         font-size: 0.8rem;
@@ -243,9 +301,17 @@
     </style>
   </head>
   <body>
-    <div class="game-shell">
+    <section id="startScreen" class="start-screen" aria-label="Neon Breakout">
+      <img class="start-cover" src="./artwork/neon-breakout-social-preview.jpg" alt="" />
+      <div class="start-content">
+        <div class="yeloby-mark start-brand" data-i18n="yelobyGame">Et Yeloby-spill · ✨🎮</div>
+        <button id="startButton" class="start-button" type="button" data-i18n="start">Start</button>
+      </div>
+    </section>
+    <div id="gameShell" class="game-shell" hidden>
       <div class="title-row">
-        <strong>Neon Breakout</strong>
+        <img class="game-logo" src="./artwork/neon-breakout-logo.png" alt="Neon Breakout" />
+        <span class="yeloby-mark title-brand">Yeloby</span>
         <button id="menuButton" type="button" data-i18n="menu">Meny</button>
       </div>
       <canvas id="game" width="480" height="640"></canvas>
@@ -334,13 +400,15 @@
           <li data-i18n="boosterScore">💎 Gir 50 bonuspoeng før vanskelighetsskalering</li>
           <li data-i18n="boosterLightning">⚡ Gir elektrisk ball, skalerte bonuspoeng, bredere padel og 50 % ekstra treffpoeng i 8 sekunder</li>
           <li data-i18n="boosterTurbo">🚀 Gir turbo og skalerte bonuspoeng</li>
+          <li data-i18n="boosterMultiball">🔵 Lager to ekstra baller</li>
           <li data-i18n="boosterFeather">🪶 Gir ballen en svevende, roligere fart</li>
           <li data-i18n="boosterJackpot">🎰 Gir 100 jackpotpoeng før vanskelighetsskalering</li>
         </ul>
       </section>
       <section id="aboutPanel" class="menu-section menu-panel">
         <h3><span data-i18n="about">Om</span> Neon Breakout</h3>
-        <p data-i18n="version">Versjon 1.4.1</p>
+        <p><span class="yeloby-mark">Yeloby</span> · <span data-i18n="brandPromise">Avslappende spill for alle, med neon, fantasi og emoji-magi.</span></p>
+        <p data-i18n="version">Versjon 1.4.3</p>
         <p data-i18n="reinforcedInfo">Fra nivå 3 kan forsterkede klosser kreve flere treff. Sprekker, svakere glød og mørkere overflate viser skaden.</p>
         <p data-i18n="builtWith">Linux-spill bygget med Electron 43</p>
         <p data-i18n="developer">Utvikler og © 2026: Johan Slåttavik</p>

@@ -154,6 +154,44 @@ export function getBrickHealth(level, row, col) {
   return 1;
 }
 
+const BRICK_CRACK_PATTERNS = [
+  [
+    [[0.16, 0.06], [0.4, 0.44], [0.3, 0.92]],
+    [[0.4, 0.44], [0.68, 0.3], [0.84, 0.06]],
+    [[0.68, 0.3], [0.78, 0.62], [0.9, 0.9]]
+  ],
+  [
+    [[0.72, 0.05], [0.55, 0.36], [0.66, 0.92]],
+    [[0.55, 0.36], [0.28, 0.55], [0.14, 0.9]],
+    [[0.28, 0.55], [0.18, 0.3], [0.08, 0.14]]
+  ],
+  [
+    [[0.42, 0.04], [0.3, 0.34], [0.5, 0.62], [0.42, 0.94]],
+    [[0.5, 0.62], [0.76, 0.46], [0.9, 0.18]],
+    [[0.3, 0.34], [0.13, 0.5], [0.08, 0.78]]
+  ],
+  [
+    [[0.86, 0.1], [0.62, 0.3], [0.7, 0.58], [0.5, 0.92]],
+    [[0.62, 0.3], [0.4, 0.2], [0.18, 0.06]],
+    [[0.7, 0.58], [0.84, 0.72], [0.9, 0.94]]
+  ]
+];
+
+export function getBrickCrackLines(seed, damage) {
+  if (damage <= 0) return [];
+  const patternIndex = Math.abs(Math.trunc(seed || 0)) % BRICK_CRACK_PATTERNS.length;
+  const lineCount = damage >= 2 ? 3 : 1;
+  return BRICK_CRACK_PATTERNS[patternIndex].slice(0, lineCount);
+}
+
+export function getMultiballVelocities(vx, vy) {
+  const speed = Math.max(3.5, Math.hypot(vx, vy));
+  return [
+    { vx: -speed * 0.7, vy: -speed * 0.72 },
+    { vx: speed * 0.7, vy: -speed * 0.72 }
+  ];
+}
+
 export function applyPowerUp(powerUp, state) {
   if (!powerUp) return state;
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getBrickHealth, getLevelLayout, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
+import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getBrickCrackLines, getBrickHealth, getLevelLayout, getMultiballVelocities, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
 
 test('bounceOffWalls reverses horizontal velocity when the ball hits a vertical wall', () => {
   const ball = { x: 6, y: 40, radius: 6, vx: -4, vy: 2 };
@@ -77,6 +77,25 @@ test('reinforced and armored bricks are introduced gradually from level three', 
   assert.equal(laterHealth.some((health) => health === 2), true);
   assert.equal(laterHealth.some((health) => health === 3), true);
   assert.equal(laterHealth.every((health) => health >= 1 && health <= 3), true);
+});
+
+test('damaged bricks have stable, varied crack patterns that intensify after another hit', () => {
+  const firstPattern = getBrickCrackLines(0, 1);
+  const secondPattern = getBrickCrackLines(1, 1);
+
+  assert.notDeepEqual(firstPattern, secondPattern);
+  assert.deepEqual(getBrickCrackLines(0, 1), firstPattern);
+  assert.equal(getBrickCrackLines(0, 2).length > firstPattern.length, true);
+  assert.deepEqual(getBrickCrackLines(0, 0), []);
+});
+
+test('multiball creates two upward-moving balls in different directions', () => {
+  const velocities = getMultiballVelocities(4, -4);
+
+  assert.equal(velocities.length, 2);
+  assert.equal(velocities[0].vx < 0, true);
+  assert.equal(velocities[1].vx > 0, true);
+  assert.equal(velocities.every(({ vy }) => vy < 0), true);
 });
 
 test('getLevelLayout creates a different pattern for later levels', () => {

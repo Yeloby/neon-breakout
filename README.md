@@ -4,6 +4,8 @@
 
 Neon Breakout er et fargerikt, moderne Breakout-spill for Linux. Spillet er
 bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
+Det er et Yeloby-spill: avslappende spill for alle, med et gjenkjennelig univers
+av neon, håndtegnet retroestetikk og kreativ bruk av emojier.
 
 [Last ned nyeste Linux-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest)
 
@@ -11,11 +13,13 @@ bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
 
 - Tre vanskelighetsgrader med ulik ballfart og poengskalering
 - Umiddelbart språkvalg mellom norsk og engelsk
+- Boxart-basert startskjerm og gjennomgående Yeloby-profil
 - Tolv varierte blokkformasjoner med ulik størrelse og tetthet
 - Forsterkede klosser med flere helsepunkt og synlig sprekkdannelse
 - Tre startliv og sjeldne ekstraliv
-- Tretten boostere med trinnvis padelbredde og tydelige fartseffekter
+- Fjorten boostere med multiball, trinnvis padelbredde og tydelige effektforklaringer
 - Lynenergi med elektriske buer, bonuspoeng, elektrisk ballspor og nedtelling
+- Åtte skiftende, prosedyregenererte rombakgrunner uten tunge bildefiler
 - Komboer, poengeffekter og nivåfeiring
 - Lokal topp 10-liste med spillernavn og vanskelighetsgrad
 - Innstillinger for lyd og visuelle effekter
@@ -67,8 +71,8 @@ Ferdige filer legges i `dist/`:
 ### AppImage
 
 ```bash
-chmod +x "dist/Neon Breakout-1.4.1.AppImage"
-./dist/Neon\ Breakout-1.4.1.AppImage
+chmod +x "dist/Neon Breakout-1.4.3.AppImage"
+./dist/Neon\ Breakout-1.4.3.AppImage
 ```
 
 ### Debian-pakke
@@ -77,7 +81,7 @@ Den nedlastede `.deb`-pakken installeres med APT, som også henter eventuelle
 systemavhengigheter:
 
 ```bash
-sudo apt install ./dist/neon-breakout_1.4.1_amd64.deb
+sudo apt install ./dist/neon-breakout_1.4.3_amd64.deb
 ```
 
 Et eget APT-arkiv er ikke nødvendig for denne enkeltpakken. Det unngår også at
@@ -86,7 +90,7 @@ brukeren må stole på en ekstra pakkekilde og signeringsnøkkel.
 ### RPM-pakke
 
 ```bash
-sudo dnf install ./dist/neon-breakout-1.4.1.x86_64.rpm
+sudo dnf install ./dist/neon-breakout-1.4.3.x86_64.rpm
 ```
 
 ### Flatpak
@@ -94,7 +98,7 @@ sudo dnf install ./dist/neon-breakout-1.4.1.x86_64.rpm
 Last ned `.flatpak`-filen fra GitHub-utgivelsen og installer den:
 
 ```bash
-flatpak install ./Neon-Breakout-1.4.1.flatpak
+flatpak install ./Neon-Breakout-1.4.3.flatpak
 flatpak run io.github.Yeloby.NeonBreakout
 ```
 
@@ -104,14 +108,14 @@ en separat innsending og godkjenning hos Flathub.
 ### Portabel utgave
 
 ```bash
-tar -xzf dist/neon-breakout-1.4.1.tar.gz
-./neon-breakout-1.4.1/neon-breakout
+tar -xzf dist/neon-breakout-1.4.3.tar.gz
+./neon-breakout-1.4.3/neon-breakout
 ```
 
 ## Utgivelser
 
 GitHub Actions kjører tester og bygger alle Linux-formatene ved push og pull
-request. En versjonstag som `v1.4.1` oppretter automatisk en GitHub Release med
+request. En versjonstag som `v1.4.3` oppretter automatisk en GitHub Release med
 installasjonspakkene som nedlastbare filer.
 
 Genererte pakker og `node_modules` er utelatt fra Git-historikken via

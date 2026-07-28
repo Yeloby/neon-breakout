@@ -1,8 +1,11 @@
-import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
+import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getBrickCrackLines, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, getMultiballVelocities, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
 import { getDefaultLanguage, translate } from './translations.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('startScreen');
+const startButton = document.getElementById('startButton');
+const gameShell = document.getElementById('gameShell');
 const scoreEl = document.getElementById('score');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
@@ -25,7 +28,7 @@ const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 const PADDLE_HEIGHT = 14;
 const PADDLE_Y = HEIGHT - 36;
-const BALL_RADIUS = 6;
+const BALL_RADIUS = 7;
 const MAX_PADDLE_WIDTH = 160;
 const POWER_UP_RADIUS = 18;
 const BRICK_ROWS = 5;
@@ -34,9 +37,9 @@ const BRICK_WIDTH = 46;
 const BRICK_HEIGHT = 20;
 const BRICK_GAP = 8;
 const DIFFICULTIES = {
-  easy: { paddleWidth: 108, launchSpeed: 4.6, maxSpeed: 5.4, scoreMultiplier: 0.8, boosterChance: 0.38 },
-  normal: { paddleWidth: 88, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
-  hard: { paddleWidth: 72, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
+  easy: { paddleWidth: 88, launchSpeed: 4.6, maxSpeed: 5.4, scoreMultiplier: 0.8, boosterChance: 0.38 },
+  normal: { paddleWidth: 72, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
+  hard: { paddleWidth: 60, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
 };
 const settings = loadSettings();
 const t = (key, values) => translate(settings.language, key, values);
@@ -67,6 +70,8 @@ let ballPulse = 0;
 let leaderboard = loadLeaderboard();
 let pendingLeaderboardEntryId = null;
 let currentStatus = { key: null, values: {} };
+let boosterHudKey = null;
+let boosterHudTimer = 0;
 
 const paddle = {
   x: WIDTH / 2 - DIFFICULTIES[settings.difficulty].paddleWidth / 2,
@@ -75,6 +80,7 @@ const paddle = {
   height: PADDLE_HEIGHT
 };
 const ball = { x: WIDTH / 2, y: HEIGHT / 2, radius: BALL_RADIUS, vx: 4, vy: -4 };
+const extraBalls = [];
 const bricks = [];
 const particles = [];
 const powerUps = [];
@@ -263,6 +269,7 @@ function spawnPowerUp(x, y) {
     { type: 'score', symbol: '💎', color: '#facc15', weight: 5 },
     { type: 'bonus', symbol: '⚡', color: '#c084fc', weight: 4 },
     { type: 'multi', symbol: '🚀', color: '#fb7185', weight: 3 },
+    { type: 'multiball', symbol: '🔵', color: '#60a5fa', weight: 2 },
     { type: 'shield', symbol: '🛡️', color: '#34d399', weight: 2 },
     { type: 'gravity', symbol: '🪶', color: '#f59e0b', weight: 3 },
     { type: 'focus', symbol: '🎯', color: '#818cf8', weight: 3 },
@@ -296,6 +303,7 @@ function createBricks() {
         alive: true,
         health,
         maxHealth: health,
+        crackSeed: level * 41 + row * 17 + col * 29,
         hitFlash: 0,
         hitCooldown: 0
       });
@@ -319,6 +327,8 @@ function resetGame() {
   piercingHits = 0;
   shieldCharges = 0;
   speedEffect = null;
+  boosterHudKey = null;
+  boosterHudTimer = 0;
   pendingLeaderboardEntryId = null;
   nameForm.hidden = true;
   const startingPaddleWidth = DIFFICULTIES[settings.difficulty].paddleWidth;
@@ -333,6 +343,7 @@ function resetGame() {
   shockwaves.length = 0;
   ballTrail.length = 0;
   powerUps.length = 0;
+  extraBalls.length = 0;
   createBricks();
   updateHud();
   setStatus();
@@ -357,16 +368,34 @@ function drawBackground() {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+  const theme = (level - 1) % 8;
   const levelHue = (195 + level * 24) % 360;
-  ctx.fillStyle = `hsla(${levelHue}, 90%, 65%, 0.16)`;
+  ctx.fillStyle = `hsla(${levelHue}, 90%, 65%, 0.14)`;
   ctx.beginPath();
-  ctx.ellipse(WIDTH * 0.25, HEIGHT * 0.22, 110, 70, -0.25, 0, Math.PI * 2);
+  if (theme % 2 === 0) ctx.ellipse(WIDTH * 0.25, HEIGHT * 0.22, 110, 70, -0.25, 0, Math.PI * 2);
+  else ctx.ellipse(WIDTH * 0.7, HEIGHT * 0.7, 150, 68, 0.5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = 'rgba(70, 240, 255, 0.1)';
-  ctx.beginPath();
-  ctx.ellipse(WIDTH * 0.72, HEIGHT * 0.75, 140, 90, 0.35, 0, Math.PI * 2);
-  ctx.fill();
+  if (theme === 1 || theme === 5) {
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.17)';
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.arc(WIDTH * 0.2, HEIGHT * 0.72, 82, 0.15, Math.PI * 1.25);
+    ctx.stroke();
+  } else if (theme === 2 || theme === 6) {
+    ctx.fillStyle = 'rgba(45, 212, 191, 0.1)';
+    ctx.beginPath();
+    ctx.ellipse(WIDTH * 0.72, HEIGHT * 0.76, 145, 92, 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (theme === 3 || theme === 7) {
+    ctx.strokeStyle = 'rgba(250, 204, 21, 0.18)';
+    ctx.lineWidth = 3;
+    for (let ring = 0; ring < 3; ring += 1) {
+      ctx.beginPath();
+      ctx.ellipse(WIDTH * 0.78, HEIGHT * 0.2, 42 + ring * 16, 14 + ring * 6, -0.3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
 
   ctx.strokeStyle = 'rgba(146, 189, 255, 0.16)';
   ctx.lineWidth = 1;
@@ -388,13 +417,16 @@ function drawBackground() {
     });
   }
 
-  ctx.fillStyle = '#5b7cff';
+  const planetColors = ['#5b7cff', '#ec4899', '#14b8a6', '#f59e0b'];
+  const planetX = theme < 4 ? WIDTH * 0.82 : WIDTH * 0.16;
+  const planetY = theme % 3 === 0 ? HEIGHT * 0.16 : HEIGHT * 0.28;
+  ctx.fillStyle = planetColors[theme % planetColors.length];
   ctx.beginPath();
-  ctx.arc(WIDTH * 0.82, HEIGHT * 0.16, 32, 0, Math.PI * 2);
+  ctx.arc(planetX, planetY, 25 + (theme % 3) * 6, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   ctx.beginPath();
-  ctx.arc(WIDTH * 0.82 + 11, HEIGHT * 0.16 - 11, 9, 0, Math.PI * 2);
+  ctx.arc(planetX + 10, planetY - 10, 7, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -410,12 +442,12 @@ function drawPaddle() {
   ctx.stroke();
 }
 
-function drawBall() {
+function drawBall(gameBall = ball) {
   const glow = 1 + Math.sin(ballPulse) * 0.12;
   const fireballActive = piercingHits > 0;
   const lightningActive = lightningTimer > 0;
-  const drawRadius = fireballActive ? ball.radius * 1.45 : ball.radius;
-  const gradient = ctx.createRadialGradient(ball.x - 2, ball.y - 2, 2, ball.x, ball.y, drawRadius * glow);
+  const drawRadius = fireballActive && gameBall === ball ? gameBall.radius * 1.45 : gameBall.radius;
+  const gradient = ctx.createRadialGradient(gameBall.x - 2, gameBall.y - 2, 2, gameBall.x, gameBall.y, drawRadius * glow);
   gradient.addColorStop(0, '#ffffff');
   gradient.addColorStop(0.3, fireballActive || lightningActive ? '#fde047' : '#fef3c7');
   gradient.addColorStop(1, fireballActive ? '#f97316' : lightningActive ? '#a855f7' : '#fb7185');
@@ -426,7 +458,7 @@ function drawBall() {
   }
   ctx.fillStyle = gradient;
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, drawRadius * glow, 0, Math.PI * 2);
+  ctx.arc(gameBall.x, gameBall.y, drawRadius * glow, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
@@ -498,18 +530,16 @@ function drawBricks() {
       ctx.strokeStyle = `rgba(15, 23, 42, ${0.75 + damageRatio * 0.2})`;
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(brick.x + brick.width * 0.18, brick.y + 2);
-      ctx.lineTo(brick.x + brick.width * 0.42, brick.y + brick.height * 0.48);
-      ctx.lineTo(brick.x + brick.width * 0.3, brick.y + brick.height - 2);
-      if (damage >= 2) {
-        ctx.moveTo(brick.x + brick.width * 0.72, brick.y + 1);
-        ctx.lineTo(brick.x + brick.width * 0.56, brick.y + brick.height * 0.52);
-        ctx.lineTo(brick.x + brick.width * 0.82, brick.y + brick.height - 2);
-        ctx.moveTo(brick.x + brick.width * 0.42, brick.y + brick.height * 0.48);
-        ctx.lineTo(brick.x + brick.width * 0.68, brick.y + brick.height * 0.35);
-      }
-      ctx.stroke();
+      getBrickCrackLines(brick.crackSeed, damage).forEach((line) => {
+        ctx.beginPath();
+        line.forEach(([x, y], index) => {
+          const pointX = brick.x + brick.width * x;
+          const pointY = brick.y + brick.height * y;
+          if (index === 0) ctx.moveTo(pointX, pointY);
+          else ctx.lineTo(pointX, pointY);
+        });
+        ctx.stroke();
+      });
     }
 
     if (brick.hitFlash > 0) {
@@ -589,7 +619,7 @@ function drawPowerUps() {
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#fff';
-    ctx.font = '24px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.font = '27px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(powerUp.symbol, 0, 0);
@@ -640,6 +670,8 @@ function updateParticles() {
   multiplierTimer = Math.max(0, multiplierTimer - 1);
   if (multiplierTimer === 0) scoreMultiplier = 1;
   lightningTimer = Math.max(0, lightningTimer - 1);
+  boosterHudTimer = Math.max(0, boosterHudTimer - 1);
+  if (boosterHudTimer === 0) boosterHudKey = null;
 }
 
 function updatePowerUps() {
@@ -680,6 +712,8 @@ function updatePowerUps() {
       catchCharges = updated.catchCharges ?? catchCharges;
       piercingHits = updated.piercingHits ?? piercingHits;
       shieldCharges = updated.shieldCharges ?? shieldCharges;
+      boosterHudKey = `boosterHud${powerUp.type[0].toUpperCase()}${powerUp.type.slice(1)}`;
+      boosterHudTimer = 210;
       spawnImpactFeedback(powerUp.x, powerUp.y - 10, powerUp.symbol, powerUp.color, true);
       if (powerUp.type === 'slow' || powerUp.type === 'gravity') {
         speedEffect = powerUp.type === 'slow' ? 'turtle' : 'feather';
@@ -696,6 +730,13 @@ function updatePowerUps() {
       }
       if (powerUp.type === 'multi') {
         playTone(980, 0.08, 'triangle');
+      }
+      if (powerUp.type === 'multiball') {
+        getMultiballVelocities(ball.vx, ball.vy).forEach((velocity) => {
+          extraBalls.push({ ...ball, ...velocity });
+        });
+        setStatus('multiballStatus');
+        playTone(1080, 0.12, 'triangle');
       }
       if (powerUp.type === 'bonus') {
         spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lightningEnergy'), '#fde047', false, 90);
@@ -729,6 +770,49 @@ function launchBall() {
   }
   ballLaunched = true;
   setStatus();
+}
+
+function updateExtraBalls() {
+  for (let index = extraBalls.length - 1; index >= 0; index -= 1) {
+    const extraBall = extraBalls[index];
+    extraBall.x += extraBall.vx;
+    extraBall.y += extraBall.vy;
+
+    const bounced = bounceOffWalls(extraBall, WIDTH, HEIGHT);
+    Object.assign(extraBall, bounced);
+    collideWithPaddle(extraBall, paddle);
+
+    for (const brick of bricks) {
+      if (!brick.alive || brick.hitCooldown > 0) continue;
+      const result = resolveBrickCollision(extraBall, brick);
+      if (!result.hit) continue;
+
+      combo += 1;
+      comboTimer = 90;
+      const earnedScore = calculateBrickScore({
+        combo,
+        scoreMultiplier,
+        difficultyMultiplier: DIFFICULTIES[settings.difficulty].scoreMultiplier,
+        lightningActive: lightningTimer > 0,
+        baseScore: result.destroyed ? 10 : 4
+      });
+      score += earnedScore;
+      brick.health = result.brick.health;
+      brick.alive = result.brick.alive;
+      brick.hitFlash = 10;
+      brick.hitCooldown = 5;
+      if (result.axis === 'x') extraBall.vx = -extraBall.vx;
+      else extraBall.vy = -extraBall.vy;
+      spawnParticles(extraBall.x, extraBall.y, brick.color);
+      if (result.destroyed && Math.random() < DIFFICULTIES[settings.difficulty].boosterChance) {
+        spawnPowerUp(brick.x + brick.width / 2, brick.y + brick.height / 2);
+      }
+      playTone(result.destroyed ? 720 : 390, 0.05, 'triangle');
+      break;
+    }
+
+    if (extraBall.y - extraBall.radius > HEIGHT) extraBalls.splice(index, 1);
+  }
 }
 
 function updateBall() {
@@ -854,6 +938,11 @@ function updateBall() {
   }
 
   if (ball.y - ball.radius > HEIGHT) {
+    if (extraBalls.length > 0) {
+      Object.assign(ball, extraBalls.pop());
+      setStatus('multiballStatus');
+      return;
+    }
     if (shieldCharges > 0) {
       shieldCharges -= 1;
       ball.y = HEIGHT - ball.radius;
@@ -872,6 +961,7 @@ function updateBall() {
       ball.vx = 0;
       ball.vy = 0;
       speedEffect = null;
+      extraBalls.length = 0;
       powerUps.length = 0;
       setStatus('lostLife', { lives });
       spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lostLifeEffect'), '#f43f5e', false, 120);
@@ -923,6 +1013,7 @@ function updateBall() {
     ball.vx = 0;
     ball.vy = 0;
     speedEffect = null;
+    extraBalls.length = 0;
     setStatus('levelComplete', { level });
     playTone(940, 0.12, 'sine');
   }
@@ -937,6 +1028,7 @@ function draw() {
   drawPaddle();
   drawParticles();
   drawBall();
+  extraBalls.forEach((extraBall) => drawBall(extraBall));
   drawLightningEffect();
   drawImpactEffects();
 
@@ -948,7 +1040,18 @@ function draw() {
     ctx.restore();
   }
 
-  if (speedEffect) {
+  if (boosterHudKey) {
+    ctx.save();
+    ctx.fillStyle = '#f8fafc';
+    ctx.font = 'bold 12px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#22d3ee';
+    ctx.shadowBlur = 8;
+    ctx.fillText(t(boosterHudKey), WIDTH / 2, 48);
+    ctx.restore();
+  }
+
+  if (speedEffect && !boosterHudKey) {
     ctx.save();
     ctx.fillStyle = speedEffect === 'turtle' ? '#86efac' : '#fbbf24';
     ctx.font = 'bold 12px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
@@ -965,7 +1068,7 @@ function draw() {
     ctx.restore();
   }
 
-  if (lightningTimer > 0) {
+  if (lightningTimer > 0 && !boosterHudKey) {
     ctx.save();
     ctx.fillStyle = '#fde047';
     ctx.font = 'bold 12px sans-serif';
@@ -1020,6 +1123,7 @@ function loop() {
     updatePaddle();
     updateParticles();
     updatePowerUps();
+    updateExtraBalls();
     updateBall();
   }
   draw();
@@ -1055,6 +1159,11 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 
 restartButton.addEventListener('click', resetGame);
+startButton?.addEventListener('click', () => {
+  startScreen.hidden = true;
+  gameShell.hidden = false;
+  resetGame();
+});
 menuButton?.addEventListener('click', () => {
   gamePaused = true;
   renderLeaderboard();
@@ -1127,4 +1236,3 @@ createBricks();
 updateHud();
 setStatus('ready');
 draw();
-animationFrameId = requestAnimationFrame(loop);
