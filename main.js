@@ -303,7 +303,7 @@ function spawnPowerUp(x, y) {
     { type: 'fireball', symbol: '🔥', color: '#fb923c', weight: 2 },
     { type: 'double', symbol: '2️⃣', color: '#e879f9', weight: 2 },
     { type: 'jackpot', symbol: '🎰', color: '#fde047', weight: 1 },
-    { type: 'life', symbol: '💖', color: '#ff2d8d', weight: 1 }
+    { type: 'life', symbol: '💖', color: '#22d3ee', weight: 1 }
   ];
   const availableTypes = lives < 5 ? types : types.filter((powerUp) => powerUp.type !== 'life');
   const powerUp = pickWeightedPowerUp(availableTypes);
@@ -511,18 +511,19 @@ function drawPaddle() {
 }
 
 function drawBall(gameBall = ball) {
-  const glow = 1 + Math.sin(ballPulse) * 0.12;
+  const glow = 1 + Math.sin(ballPulse) * 0.05;
   const fireballActive = piercingHits > 0;
   const lightningActive = lightningTimer > 0;
   const drawRadius = fireballActive && gameBall === ball ? gameBall.radius * 1.45 : gameBall.radius;
   const gradient = ctx.createRadialGradient(gameBall.x - 2, gameBall.y - 2, 2, gameBall.x, gameBall.y, drawRadius * glow);
+  const speedTint = speedEffect === 'turtle' ? '#86efac' : speedEffect === 'feather' ? '#fde68a' : null;
   gradient.addColorStop(0, '#ffffff');
-  gradient.addColorStop(0.3, fireballActive || lightningActive ? '#fde047' : '#fef3c7');
-  gradient.addColorStop(1, fireballActive ? '#f97316' : lightningActive ? '#a855f7' : '#fb7185');
+  gradient.addColorStop(0.3, fireballActive || lightningActive ? '#fde047' : speedTint || '#fef3c7');
+  gradient.addColorStop(1, fireballActive ? '#f97316' : lightningActive ? '#a855f7' : speedTint || '#fb7185');
   ctx.save();
   if (fireballActive || lightningActive) {
     ctx.shadowColor = fireballActive ? '#fb923c' : '#fde047';
-    ctx.shadowBlur = lightningActive ? 24 : 18;
+    ctx.shadowBlur = lightningActive ? 12 : 15;
   }
   ctx.fillStyle = gradient;
   ctx.beginPath();
@@ -539,9 +540,9 @@ function drawLightningEffect() {
   ctx.globalCompositeOperation = 'lighter';
   ctx.lineCap = 'round';
 
-  for (let arcIndex = 0; arcIndex < 4; arcIndex += 1) {
-    const angle = time * 0.35 + arcIndex * (Math.PI / 2);
-    const radius = 19 + Math.sin(time + arcIndex) * 5;
+  for (let arcIndex = 0; arcIndex < 2; arcIndex += 1) {
+    const angle = time * 0.35 + arcIndex * Math.PI;
+    const radius = 14 + Math.sin(time + arcIndex) * 2;
     const endX = ball.x + Math.cos(angle) * radius;
     const endY = ball.y + Math.sin(angle) * radius;
     const perpendicularX = -Math.sin(angle);
@@ -549,9 +550,9 @@ function drawLightningEffect() {
 
     ctx.beginPath();
     ctx.moveTo(ball.x, ball.y);
-    for (let segment = 1; segment <= 4; segment += 1) {
-      const progress = segment / 4;
-      const jitter = Math.sin(time * 2.3 + arcIndex * 7 + segment * 5) * 4;
+    for (let segment = 1; segment <= 3; segment += 1) {
+      const progress = segment / 3;
+      const jitter = Math.sin(time * 2.3 + arcIndex * 7 + segment * 5) * 2;
       ctx.lineTo(
         ball.x + (endX - ball.x) * progress + perpendicularX * jitter,
         ball.y + (endY - ball.y) * progress + perpendicularY * jitter
@@ -560,15 +561,9 @@ function drawLightningEffect() {
     ctx.strokeStyle = arcIndex % 2 === 0 ? 'rgba(253, 224, 71, 0.95)' : 'rgba(192, 132, 252, 0.9)';
     ctx.lineWidth = arcIndex % 2 === 0 ? 1.8 : 1.2;
     ctx.shadowColor = arcIndex % 2 === 0 ? '#fde047' : '#c084fc';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 5;
     ctx.stroke();
   }
-
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, 13 + Math.sin(time * 1.7) * 3, 0, Math.PI * 2);
-  ctx.stroke();
   ctx.restore();
 }
 
@@ -577,46 +572,23 @@ function drawActivePowerUpEffects() {
   const time = performance.now() * 0.008;
   const activeBalls = [ball, ...extraBalls];
 
-  if (speedEffect) {
+  if (speedEffect === 'turbo') {
     activeBalls.forEach((gameBall) => {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      if (speedEffect === 'turtle') {
-        ctx.strokeStyle = 'rgba(134, 239, 172, 0.82)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 5]);
-        ctx.beginPath();
-        ctx.arc(gameBall.x, gameBall.y, 15 + Math.sin(time) * 2, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (speedEffect === 'feather') {
-        ctx.strokeStyle = 'rgba(253, 224, 71, 0.88)';
-        ctx.lineWidth = 2;
-        for (const side of [-1, 1]) {
-          ctx.beginPath();
-          ctx.moveTo(gameBall.x + side * 7, gameBall.y);
-          ctx.quadraticCurveTo(
-            gameBall.x + side * 20,
-            gameBall.y - 9 + Math.sin(time * 1.4) * 3,
-            gameBall.x + side * 25,
-            gameBall.y + 5
-          );
-          ctx.stroke();
-        }
-      } else if (speedEffect === 'turbo') {
-        const speed = Math.max(0.001, Math.hypot(gameBall.vx, gameBall.vy));
-        const tailX = gameBall.x - (gameBall.vx / speed) * 34;
-        const tailY = gameBall.y - (gameBall.vy / speed) * 34;
-        const turboGradient = ctx.createLinearGradient(gameBall.x, gameBall.y, tailX, tailY);
-        turboGradient.addColorStop(0, 'rgba(255,255,255,0.95)');
-        turboGradient.addColorStop(0.35, 'rgba(250,204,21,0.9)');
-        turboGradient.addColorStop(1, 'rgba(244,63,94,0)');
-        ctx.strokeStyle = turboGradient;
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.moveTo(gameBall.x, gameBall.y);
-        ctx.lineTo(tailX, tailY);
-        ctx.stroke();
-      }
+      const speed = Math.max(0.001, Math.hypot(gameBall.vx, gameBall.vy));
+      const tailX = gameBall.x - (gameBall.vx / speed) * 28;
+      const tailY = gameBall.y - (gameBall.vy / speed) * 28;
+      const turboGradient = ctx.createLinearGradient(gameBall.x, gameBall.y, tailX, tailY);
+      turboGradient.addColorStop(0, 'rgba(255,255,255,0.85)');
+      turboGradient.addColorStop(0.35, 'rgba(250,204,21,0.72)');
+      turboGradient.addColorStop(1, 'rgba(244,63,94,0)');
+      ctx.strokeStyle = turboGradient;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(gameBall.x, gameBall.y);
+      ctx.lineTo(tailX, tailY);
+      ctx.stroke();
       ctx.restore();
     });
   }
@@ -1209,8 +1181,8 @@ function updatePowerUps() {
       const boosterHudKey = `boosterHud${powerUp.type[0].toUpperCase()}${powerUp.type.slice(1)}`;
       boosterHudMessages = [
         ...boosterHudMessages.filter((message) => message.key !== boosterHudKey),
-        { key: boosterHudKey, timer: 600 }
-      ].slice(-3);
+        { key: boosterHudKey, timer: 150 }
+      ].slice(-1);
       boosterCelebration = {
         type: powerUp.type,
         symbol: powerUp.symbol,
@@ -1586,24 +1558,13 @@ function drawTopInformation() {
   ctx.textBaseline = 'middle';
 
   if (boosterHudMessages.length > 0) {
-    const messageIndex = Math.floor(performance.now() / 2000) % boosterHudMessages.length;
-    const message = boosterHudMessages[messageIndex];
-    const position = boosterHudMessages.length > 1
-      ? `  ${messageIndex + 1}/${boosterHudMessages.length}`
-      : '';
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
-    ctx.strokeStyle = 'rgba(34, 211, 238, 0.75)';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.roundRect(12, 7, WIDTH - 24, 23, 9);
-    ctx.fill();
-    ctx.stroke();
+    const message = boosterHudMessages[0];
     drawFittedHudText(
-      `${t(message.key)}${position}`,
+      t(message.key),
       WIDTH / 2,
-      18.5,
+      14,
       WIDTH - 42,
-      13,
+      12,
       '#f8fafc',
       10
     );
@@ -1612,30 +1573,25 @@ function drawTopInformation() {
   if (statuses.length > 0) {
     const statusText = statuses.map((status) => status.text).join('  ·  ');
     const statusColor = statuses.length === 1 ? statuses[0].color : '#bff8ff';
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
-    ctx.strokeStyle = `${statusColor}99`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(12, 34, WIDTH - 24, 21, 8);
-    ctx.fill();
-    ctx.stroke();
-    drawFittedHudText(statusText, WIDTH / 2, 44.5, WIDTH - 38, 12, statusColor, 9);
+    drawFittedHudText(statusText, WIDTH / 2, 31, WIDTH - 38, 11, statusColor, 8.5);
   }
   ctx.restore();
 }
 
 function drawFittedHudText(text, x, y, maxWidth, preferredSize, color, minimumSize = 11.5) {
-  let fontSize = preferredSize;
+  let fontSize = Math.round(preferredSize);
+  const smallestSize = Math.ceil(minimumSize);
   do {
-    ctx.font = `bold ${fontSize}px "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    ctx.font = `800 ${fontSize}px Arial, "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) break;
-    fontSize -= 0.5;
-  } while (fontSize > minimumSize);
+    fontSize -= 1;
+  } while (fontSize > smallestSize);
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(2, 6, 23, 0.92)';
+  ctx.strokeText(text, Math.round(x), Math.round(y), maxWidth);
   ctx.fillStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 5;
-  ctx.fillText(text, x, y, maxWidth);
-  ctx.shadowBlur = 0;
+  ctx.fillText(text, Math.round(x), Math.round(y), maxWidth);
 }
 
 function loop() {

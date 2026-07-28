@@ -157,19 +157,19 @@
         min-width: 168px;
         padding: 10px 24px;
         color: #071225;
-        background: linear-gradient(135deg, #facc15, #22d3ee 55%, #f472b6);
+        background: #22d3ee;
         border: 2px solid rgba(255, 255, 255, 0.9);
         box-shadow:
           0 0 22px rgba(34, 211, 238, 0.72),
-          0 0 34px rgba(244, 114, 182, 0.42);
+          5px 5px 0 rgba(219, 39, 119, 0.82);
         animation: game-over-button-pulse 1.4s ease-in-out infinite alternate;
       }
       @keyframes game-over-button-pulse {
         to {
           transform: translate(-50%, -50%) scale(1.04);
           box-shadow:
-            0 0 28px rgba(250, 204, 21, 0.78),
-            0 0 42px rgba(244, 114, 182, 0.55);
+            0 0 28px rgba(34, 211, 238, 0.82),
+            5px 5px 0 rgba(219, 39, 119, 0.82);
         }
       }
       canvas {
@@ -208,16 +208,25 @@
       }
       .stat-card strong {
         font-size: 1rem;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+        color: #f8fafc;
+        line-height: 1.05;
       }
       button {
         border: 0;
         border-radius: 999px;
         padding: 8px 16px;
-        background: linear-gradient(135deg, #22d3ee, #38bdf8);
+        background: #22d3ee;
         color: #082f49;
         font-weight: 800;
         cursor: pointer;
         box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
+        transition: background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+      }
+      button:hover,
+      button:focus-visible {
+        background: #67e8f9;
       }
       .sr-only {
         position: absolute;
@@ -320,7 +329,7 @@
       }
       .menu-tabs button.active {
         color: #082f49;
-        background: linear-gradient(135deg, #67e8f9, #facc15);
+        background: #22d3ee;
         border-color: rgba(255, 255, 255, 0.7);
         box-shadow: 0 0 18px rgba(34, 211, 238, 0.26);
       }
@@ -390,6 +399,38 @@
         border-radius: 12px;
         background: rgba(15, 23, 42, 0.7);
         border: 1px solid rgba(34, 211, 238, 0.12);
+      }
+      .control-note {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 10px;
+        align-items: center;
+        margin: 14px 0 8px;
+        padding: 10px 11px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(34, 211, 238, 0.18);
+      }
+      .control-badge {
+        grid-row: 1 / 3;
+        min-width: 42px;
+        padding: 5px 7px;
+        border-radius: 8px;
+        color: #082f49;
+        background: #22d3ee;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-align: center;
+      }
+      .control-note strong {
+        color: #e0f2fe;
+        font-size: 0.84rem;
+      }
+      .control-note small,
+      .settings-note {
+        color: #94a3b8;
+        line-height: 1.35;
       }
       select {
         border: 1px solid rgba(34, 211, 238, 0.3);
@@ -559,9 +600,12 @@
           <span data-i18n="visualEffects">Visuelle effekter</span>
           <input id="effectsToggle" type="checkbox" />
         </label>
-        <small data-i18n="gamepadHelp">Gamepad: venstre spak/D-pad flytter, A skyter, Start åpner menyen og Y bytter fullskjerm.</small>
-        <br />
-        <small data-i18n="difficultyNextGame">Vanskelighetsgraden brukes fra neste nye spill.</small>
+        <div class="control-note">
+          <span class="control-badge" aria-hidden="true">PAD</span>
+          <strong data-i18n="gamepadTitle">Gamepad</strong>
+          <small data-i18n="gamepadHelp">Spak/D-pad: flytt · A: skyt · Start: meny · Y: fullskjerm</small>
+        </div>
+        <small class="settings-note" data-i18n="difficultyNextGame">Vanskelighetsgraden brukes fra neste nye spill.</small>
       </section>
       <section id="scoresPanel" class="menu-section menu-panel leaderboard">
         <h3 data-i18n="fullScoreList">Hele poenglisten</h3>
