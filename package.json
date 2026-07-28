@@ -1,8 +1,8 @@
 {
   "name": "neon-breakout",
-  "version": "1.4.5",
+  "version": "1.5.1",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/Yeloby/neon-breakout",
   "repository": {
     "type": "git",
@@ -41,7 +41,9 @@
       "translations.js",
       "breakoutGameLogic.js",
       "electron-main.js",
+      "LICENSE",
       "package.json",
+      "artwork/neon-breakout-app-icon.png",
       "artwork/neon-breakout-logo-1.4.5.png",
       "artwork/neon-breakout-social-preview-1.4.5.jpg",
       "artwork/yeloby-logo-1.4.5.png"
@@ -54,6 +56,7 @@
         "tar.gz"
       ],
       "category": "Game",
+      "icon": "artwork/neon-breakout-app-icon.png",
       "synopsis": "Neon Breakout",
       "description": "Et fargerikt og moderne Breakout-spill for Linux.",
       "maintainer": "Johan Slåttavik",

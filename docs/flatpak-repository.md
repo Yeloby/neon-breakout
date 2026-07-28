@@ -5,7 +5,12 @@ openSUSE, Debian, Ubuntu og andre distribusjoner med Flatpak.
 
 ## Installasjon for brukere
 
-Legg til Yeloby-kilden én gang:
+For grafisk installasjon åpnes denne filen i COSMIC Store, GNOME Software
+eller KDE Discover:
+
+`https://yeloby.github.io/neon-breakout/flatpak/neon-breakout.flatpakref`
+
+Alternativt legges Yeloby-kilden til én gang fra terminalen:
 
 ```bash
 flatpak remote-add --if-not-exists yeloby \
@@ -26,4 +31,6 @@ sudo pacman -S flatpak
 ```
 
 Arkivet signeres med den samme dedikerte Yeloby-nøkkelen som APT-arkivet og
-publiseres automatisk ved nye versjonstagger.
+publiseres automatisk ved nye versjonstagger. Arbeidsflyten genererer både
+`yeloby.flatpakrepo` for hele Yeloby-kilden og `neon-breakout.flatpakref` for
+direkte installasjon av spillet.

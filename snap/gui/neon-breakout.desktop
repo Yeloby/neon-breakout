@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Neon Breakout
+Comment=A colorful and relaxing Breakout game
+Comment[nb]=Et fargerikt og avslappende Breakout-spill
+Exec=neon-breakout
+Icon=${SNAP}/meta/gui/icon.png
+Terminal=false
+Type=Application
+Categories=Game;ArcadeGame;

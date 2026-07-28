@@ -5,7 +5,7 @@
   <summary>A colorful and relaxing Breakout game</summary>
   <summary xml:lang="no">Et fargerikt og avslappende Breakout-spill</summary>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>LicenseRef-proprietary</project_license>
+  <project_license>GPL-3.0-or-later</project_license>
   <description>
     <p>Break neon bricks in a relaxing arcade game by Yeloby. Collect creative emoji power-ups, build combos and explore varied block formations across three difficulty modes.</p>
     <p xml:lang="no">Knus neonklosser i et avslappende arkadespill fra Yeloby. Samle kreative emoji-boostere, bygg komboer og utforsk varierte blokkformasjoner på tre vanskelighetsgrader.</p>
@@ -36,6 +36,12 @@
     <binary>neon-breakout</binary>
   </provides>
   <releases>
+    <release version="1.5.1" date="2026-07-28">
+      <description>
+        <p>Adds responsive fullscreen play, gamepad support, a refined interface and GNU GPLv3 licensing.</p>
+        <p xml:lang="no">Legger til responsiv fullskjerm, gamepadstøtte, forbedret grensesnitt og GNU GPLv3-lisens.</p>
+      </description>
+    </release>
     <release version="1.4.5" date="2026-07-28"/>
     <release version="1.4.4" date="2026-07-28"/>
     <release version="1.4.3" date="2026-07-28"/>

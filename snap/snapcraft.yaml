@@ -1,10 +1,11 @@
 name: neon-breakout
 base: core24
-version: '1.4.5'
+version: '1.5.1'
 summary: A colorful and relaxing Breakout game by Yeloby
 description: |
   Neon Breakout is a relaxing arcade game with neon visuals, creative emoji
   power-ups, varied levels and three difficulty modes.
+license: GPL-3.0-or-later
 grade: stable
 confinement: strict
 
@@ -21,8 +22,6 @@ parts:
   neon-breakout:
     plugin: dump
     source: dist/linux-unpacked
-    organize:
-      neon-breakout: bin/neon-breakout
     stage-packages:
       - libnss3
       - libasound2t64

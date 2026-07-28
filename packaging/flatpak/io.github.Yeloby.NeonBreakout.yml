@@ -19,7 +19,7 @@ modules:
       - cp -a locales resources chrome-sandbox chrome_100_percent.pak chrome_200_percent.pak icudtl.dat libEGL.so libGLESv2.so libffmpeg.so libvk_swiftshader.so libvulkan.so.1 resources.pak snapshot_blob.bin v8_context_snapshot.bin vk_swiftshader_icd.json /app/lib/neon-breakout/
       - install -Dm755 neon-breakout-wrapper /app/bin/neon-breakout
       - install -Dm644 io.github.Yeloby.NeonBreakout.desktop /app/share/applications/io.github.Yeloby.NeonBreakout.desktop
-      - install -Dm644 io.github.Yeloby.NeonBreakout.svg /app/share/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg
+      - install -Dm644 io.github.Yeloby.NeonBreakout.png /app/share/icons/hicolor/512x512/apps/io.github.Yeloby.NeonBreakout.png
       - install -Dm644 io.github.Yeloby.NeonBreakout.metainfo.xml /app/share/metainfo/io.github.Yeloby.NeonBreakout.metainfo.xml
     sources:
       - type: dir
@@ -29,6 +29,6 @@ modules:
       - type: file
         path: io.github.Yeloby.NeonBreakout.desktop
       - type: file
-        path: io.github.Yeloby.NeonBreakout.svg
+        path: io.github.Yeloby.NeonBreakout.png
       - type: file
         path: io.github.Yeloby.NeonBreakout.metainfo.xml

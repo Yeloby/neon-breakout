@@ -1,17 +1,17 @@
-import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getBrickCrackLines, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, getMultiballVelocities, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
+import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, capBallVelocity, collideWithPaddle, getBrickCrackLines, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, getMultiballVelocities, pickWeightedPowerUp, qualifiesForLeaderboard, resolveBrickCollision, setBallSpeed } from './breakoutGameLogic.js';
 import { getDefaultLanguage, translate } from './translations.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const startScreen = document.getElementById('startScreen');
 const startForm = document.getElementById('startForm');
-const startPlayerNameInput = document.getElementById('startPlayerName');
 const gameShell = document.getElementById('gameShell');
 const scoreEl = document.getElementById('score');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
 const statusEl = document.getElementById('status');
 const restartButton = document.getElementById('restartButton');
+const fullscreenButton = document.getElementById('fullscreenButton');
 const highScoreEl = document.getElementById('highScore');
 const leaderboardEl = document.getElementById('leaderboard');
 const menuButton = document.getElementById('menuButton');
@@ -22,6 +22,9 @@ const soundToggle = document.getElementById('soundToggle');
 const effectsToggle = document.getElementById('effectsToggle');
 const languageSelect = document.getElementById('languageSelect');
 const menuLeaderboardEl = document.getElementById('menuLeaderboard');
+const highScoreDialog = document.getElementById('highScoreDialog');
+const highScoreForm = document.getElementById('highScoreForm');
+const highScorePlayerNameInput = document.getElementById('highScorePlayerName');
 
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -36,9 +39,14 @@ const BRICK_WIDTH = 46;
 const BRICK_HEIGHT = 20;
 const BRICK_GAP = 8;
 const DIFFICULTIES = {
-  easy: { paddleWidth: 88, launchSpeed: 4.6, maxSpeed: 5.4, scoreMultiplier: 0.8, boosterChance: 0.38 },
-  normal: { paddleWidth: 72, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
-  hard: { paddleWidth: 60, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
+  easy: { paddleWidth: 88, launchSpeed: 4.2, maxSpeed: 4.9, scoreMultiplier: 0.8, boosterChance: 0.38 },
+  normal: { paddleWidth: 72, launchSpeed: 5.2, maxSpeed: 6.1, scoreMultiplier: 1, boosterChance: 0.32 },
+  hard: { paddleWidth: 60, launchSpeed: 6.3, maxSpeed: 7.5, scoreMultiplier: 1.4, boosterChance: 0.26 }
+};
+const SPEED_EFFECT_DURATIONS = {
+  turtle: 240,
+  feather: 360,
+  turbo: 300
 };
 const settings = loadSettings();
 const t = (key, values) => translate(settings.language, key, values);
@@ -49,6 +57,8 @@ let lives = 3;
 let gameActive = true;
 let animationFrameId = null;
 let keys = { left: false, right: false };
+let gamepadAxis = 0;
+let previousGamepadButtons = [];
 let highScore = Number(localStorage.getItem('neon-breakout-high-score') || 0);
 const storedHighScoreName = localStorage.getItem('neon-breakout-high-score-name') || '';
 let highScoreName = !storedHighScoreName || storedHighScoreName === 'ANON'
@@ -66,15 +76,20 @@ let catchCharges = 0;
 let piercingHits = 0;
 let shieldCharges = 0;
 let speedEffect = null;
+let speedEffectTimer = 0;
 let gamePaused = false;
 let paddlePulse = 0;
 let ballPulse = 0;
 let leaderboard = loadLeaderboard();
 const storedPlayerName = localStorage.getItem('neon-breakout-player-name') || '';
-let activePlayerName = storedPlayerName === 'ANON' ? '' : storedPlayerName;
+const legacyDefaultNames = new Set(['anon', 'johan', 'johan slåttavik']);
+let activePlayerName = legacyDefaultNames.has(storedPlayerName.trim().toLowerCase())
+  ? ''
+  : storedPlayerName;
 let currentStatus = { key: null, values: {} };
-let boosterHudKey = null;
-let boosterHudTimer = 0;
+let boosterHudMessages = [];
+let boosterCelebration = null;
+let pendingScoreEntry = null;
 
 const paddle = {
   x: WIDTH / 2 - DIFFICULTIES[settings.difficulty].paddleWidth / 2,
@@ -146,6 +161,7 @@ function applyTranslations() {
     element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
   });
   if (currentStatus.key) statusEl.textContent = t(currentStatus.key, currentStatus.values);
+  if (fullscreenButton) updateFullscreenButton();
   renderLeaderboard();
 }
 
@@ -165,7 +181,7 @@ function playTone(frequency, duration, type = 'sine') {
 }
 
 function randomColor() {
-  const palette = ['#22d3ee', '#f472b6', '#fb7185', '#a78bfa', '#facc15'];
+  const palette = ['#20dff5', '#ff3b91', '#ff5364', '#9b63f6', '#ffc928'];
   return palette[Math.floor(Math.random() * palette.length)];
 }
 
@@ -286,7 +302,7 @@ function spawnPowerUp(x, y) {
     { type: 'fireball', symbol: '🔥', color: '#fb923c', weight: 2 },
     { type: 'double', symbol: '2️⃣', color: '#e879f9', weight: 2 },
     { type: 'jackpot', symbol: '🎰', color: '#fde047', weight: 1 },
-    { type: 'life', symbol: '❤️', color: '#f43f5e', weight: 1 }
+    { type: 'life', symbol: '💖', color: '#ff2d8d', weight: 1 }
   ];
   const availableTypes = lives < 5 ? types : types.filter((powerUp) => powerUp.type !== 'life');
   const powerUp = pickWeightedPowerUp(availableTypes);
@@ -321,6 +337,8 @@ function createBricks() {
 }
 
 function resetGame() {
+  if (highScoreDialog?.open) highScoreDialog.close();
+  pendingScoreEntry = null;
   score = 0;
   level = 1;
   lives = 3;
@@ -336,8 +354,9 @@ function resetGame() {
   piercingHits = 0;
   shieldCharges = 0;
   speedEffect = null;
-  boosterHudKey = null;
-  boosterHudTimer = 0;
+  speedEffectTimer = 0;
+  boosterHudMessages = [];
+  boosterCelebration = null;
   const startingPaddleWidth = DIFFICULTIES[settings.difficulty].paddleWidth;
   paddle.x = WIDTH / 2 - startingPaddleWidth / 2;
   paddle.width = startingPaddleWidth;
@@ -441,12 +460,52 @@ function drawPaddle() {
   const pulse = 1 + Math.sin(paddlePulse) * 0.03;
   const width = paddle.width * pulse;
   const x = paddle.x + (paddle.width - width) / 2;
-  ctx.fillStyle = '#38bdf8';
+  const magnetActive = catchCharges > 0;
+  const paddleGradient = ctx.createLinearGradient(x, paddle.y, x + width, paddle.y);
+  if (magnetActive) {
+    paddleGradient.addColorStop(0, '#fb7185');
+    paddleGradient.addColorStop(0.24, '#f43f5e');
+    paddleGradient.addColorStop(0.42, '#f8fafc');
+    paddleGradient.addColorStop(0.58, '#f8fafc');
+    paddleGradient.addColorStop(0.76, '#22d3ee');
+    paddleGradient.addColorStop(1, '#38bdf8');
+  } else {
+    paddleGradient.addColorStop(0, '#22d3ee');
+    paddleGradient.addColorStop(1, '#38bdf8');
+  }
+  ctx.save();
+  if (magnetActive) {
+    ctx.shadowColor = '#e879f9';
+    ctx.shadowBlur = 18;
+  }
+  ctx.fillStyle = paddleGradient;
   ctx.beginPath();
   ctx.roundRect(x, paddle.y, width, paddle.height, 10);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.strokeStyle = magnetActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)';
   ctx.stroke();
+  ctx.restore();
+
+  if (!magnetActive) return;
+
+  const centerX = paddle.x + paddle.width / 2;
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 1.6;
+  for (let arc = 0; arc < 2; arc += 1) {
+    const spread = 13 + arc * 9;
+    ctx.beginPath();
+    ctx.arc(centerX, paddle.y - 1, spread, Math.PI * 1.12, Math.PI * 1.88);
+    ctx.strokeStyle = arc === 0 ? 'rgba(248,250,252,0.9)' : 'rgba(232,121,249,0.65)';
+    ctx.stroke();
+  }
+  ctx.font = '15px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.shadowColor = '#e879f9';
+  ctx.shadowBlur = 8;
+  ctx.fillText('🧲', centerX, paddle.y - 3);
+  ctx.restore();
 }
 
 function drawBall(gameBall = ball) {
@@ -511,6 +570,113 @@ function drawLightningEffect() {
   ctx.restore();
 }
 
+function drawActivePowerUpEffects() {
+  if (!settings.effects) return;
+  const time = performance.now() * 0.008;
+  const activeBalls = [ball, ...extraBalls];
+
+  if (speedEffect) {
+    activeBalls.forEach((gameBall) => {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      if (speedEffect === 'turtle') {
+        ctx.strokeStyle = 'rgba(134, 239, 172, 0.82)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 5]);
+        ctx.beginPath();
+        ctx.arc(gameBall.x, gameBall.y, 15 + Math.sin(time) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (speedEffect === 'feather') {
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.88)';
+        ctx.lineWidth = 2;
+        for (const side of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(gameBall.x + side * 7, gameBall.y);
+          ctx.quadraticCurveTo(
+            gameBall.x + side * 20,
+            gameBall.y - 9 + Math.sin(time * 1.4) * 3,
+            gameBall.x + side * 25,
+            gameBall.y + 5
+          );
+          ctx.stroke();
+        }
+      } else if (speedEffect === 'turbo') {
+        const speed = Math.max(0.001, Math.hypot(gameBall.vx, gameBall.vy));
+        const tailX = gameBall.x - (gameBall.vx / speed) * 34;
+        const tailY = gameBall.y - (gameBall.vy / speed) * 34;
+        const turboGradient = ctx.createLinearGradient(gameBall.x, gameBall.y, tailX, tailY);
+        turboGradient.addColorStop(0, 'rgba(255,255,255,0.95)');
+        turboGradient.addColorStop(0.35, 'rgba(250,204,21,0.9)');
+        turboGradient.addColorStop(1, 'rgba(244,63,94,0)');
+        ctx.strokeStyle = turboGradient;
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(gameBall.x, gameBall.y);
+        ctx.lineTo(tailX, tailY);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+  }
+
+  if (shieldCharges > 0) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.88)';
+    ctx.shadowColor = '#34d399';
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(18, HEIGHT - 7);
+    ctx.quadraticCurveTo(WIDTH / 2, HEIGHT - 15 - Math.sin(time) * 2, WIDTH - 18, HEIGHT - 7);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (scoreMultiplier > 1) {
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(time * 0.35);
+    ctx.fillStyle = '#e879f9';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#e879f9';
+    ctx.shadowBlur = 8;
+    ctx.fillText('2×', 0, -20);
+    ctx.restore();
+  }
+
+  if (!boosterCelebration) return;
+  const progress = 1 - boosterCelebration.life / boosterCelebration.maxLife;
+  const alpha = Math.min(1, boosterCelebration.life / 22);
+  const centerX = boosterCelebration.type === 'wide' ? paddle.x + paddle.width / 2 : ball.x;
+  const centerY = boosterCelebration.type === 'wide' ? paddle.y : ball.y;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = boosterCelebration.color;
+  ctx.shadowColor = boosterCelebration.color;
+  ctx.shadowBlur = 16;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 18 + progress * 44, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const rays = ['score', 'jackpot', 'life', 'bonus'].includes(boosterCelebration.type) ? 12 : 7;
+  for (let ray = 0; ray < rays; ray += 1) {
+    const angle = (Math.PI * 2 * ray) / rays + progress;
+    const inner = 20 + progress * 12;
+    const outer = inner + 9 + progress * 12;
+    ctx.beginPath();
+    ctx.moveTo(centerX + Math.cos(angle) * inner, centerY + Math.sin(angle) * inner);
+    ctx.lineTo(centerX + Math.cos(angle) * outer, centerY + Math.sin(angle) * outer);
+    ctx.stroke();
+  }
+  ctx.font = '30px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(boosterCelebration.symbol, centerX, centerY - 28 - progress * 12);
+  ctx.restore();
+}
+
 function drawBricks() {
   bricks.forEach((brick) => {
     if (!brick.alive) return;
@@ -535,14 +701,24 @@ function drawBricks() {
       armoredSurface.addColorStop(1, brick.maxHealth === 3 ? '#020617' : '#0f172a');
       ctx.fillStyle = armoredSurface;
     } else {
-      ctx.fillStyle = brick.color;
+      const neonSurface = ctx.createLinearGradient(
+        brick.x,
+        brick.y,
+        brick.x,
+        brick.y + brick.height
+      );
+      neonSurface.addColorStop(0, '#ffffff');
+      neonSurface.addColorStop(0.13, brick.color);
+      neonSurface.addColorStop(0.72, brick.color);
+      neonSurface.addColorStop(1, '#071225');
+      ctx.fillStyle = neonSurface;
     }
     ctx.beginPath();
     ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = brick.maxHealth > 1 ? brick.color : 'rgba(255,255,255,0.95)';
-    ctx.lineWidth = 1.25 + (brick.maxHealth - 1) * 0.65;
+    ctx.strokeStyle = brick.maxHealth > 1 ? brick.color : 'rgba(235, 251, 255, 0.98)';
+    ctx.lineWidth = 1.7 + (brick.maxHealth - 1) * 0.65;
     ctx.stroke();
 
     if (brick.maxHealth > 1) {
@@ -575,6 +751,7 @@ function drawBricks() {
       ctx.lineWidth = brick.maxHealth === 3 ? 1.8 : 1.2;
       ctx.stroke();
     }
+    drawBrickBoxArtTexture(brick);
 
     if (damage > 0) {
       ctx.shadowBlur = 0;
@@ -613,6 +790,72 @@ function drawBricks() {
     }
     ctx.restore();
   });
+}
+
+function seededBrickValue(seed, index) {
+  const value = Math.sin(seed * 12.9898 + index * 78.233) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function drawBrickBoxArtTexture(brick) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(brick.x + 1.5, brick.y + 1.5, brick.width - 3, brick.height - 3, 4.5);
+  ctx.clip();
+
+  const paintedLight = ctx.createLinearGradient(
+    brick.x,
+    brick.y,
+    brick.x + brick.width,
+    brick.y + brick.height
+  );
+  paintedLight.addColorStop(0, 'rgba(255,255,255,0.52)');
+  paintedLight.addColorStop(0.2, 'rgba(255,255,255,0.12)');
+  paintedLight.addColorStop(0.64, 'rgba(255,255,255,0)');
+  paintedLight.addColorStop(1, 'rgba(2,6,23,0.42)');
+  ctx.fillStyle = paintedLight;
+  ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+
+  ctx.lineCap = 'round';
+  for (let strokeIndex = 0; strokeIndex < 9; strokeIndex += 1) {
+    const startX = brick.x + 4 + seededBrickValue(brick.crackSeed, strokeIndex * 4) * (brick.width - 12);
+    const startY = brick.y + 3 + seededBrickValue(brick.crackSeed, strokeIndex * 4 + 1) * (brick.height - 7);
+    const length = 5 + seededBrickValue(brick.crackSeed, strokeIndex * 4 + 2) * 13;
+    const slope = (seededBrickValue(brick.crackSeed, strokeIndex * 4 + 3) - 0.5) * 3.5;
+    ctx.strokeStyle = strokeIndex % 3 === 0
+      ? 'rgba(255,255,255,0.28)'
+      : strokeIndex % 3 === 1
+        ? 'rgba(2,6,23,0.18)'
+        : 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 0.65 + seededBrickValue(brick.crackSeed, strokeIndex + 40) * 0.75;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(Math.min(brick.x + brick.width - 3, startX + length), startY + slope);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+  ctx.lineWidth = 1.25;
+  ctx.beginPath();
+  ctx.moveTo(brick.x + 7, brick.y + 4);
+  ctx.lineTo(brick.x + brick.width - 9, brick.y + 4);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(2,6,23,0.58)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(brick.x + 7, brick.y + brick.height - 3);
+  ctx.lineTo(brick.x + brick.width - 7, brick.y + brick.height - 3);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = brick.maxHealth > 1 ? 'rgba(186,230,253,0.34)' : `${brick.color}cc`;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(brick.x + 3.5, brick.y + 3.5, brick.width - 7, brick.height - 7, 3.5);
+  ctx.stroke();
+  ctx.restore();
 }
 
 function drawBallTrail() {
@@ -754,14 +997,27 @@ function drawPowerUps() {
     ctx.save();
     ctx.translate(powerUp.x, powerUp.y);
     ctx.shadowColor = powerUp.color;
-    ctx.shadowBlur = powerUp.type === 'bonus' ? 22 : 14;
-    ctx.fillStyle = powerUp.color;
+    ctx.shadowBlur = powerUp.type === 'bonus' ? 24 : 17;
+    const tokenGradient = ctx.createRadialGradient(-5, -6, 2, 0, 0, POWER_UP_RADIUS);
+    tokenGradient.addColorStop(0, 'rgba(255,255,255,0.9)');
+    tokenGradient.addColorStop(0.16, '#172554');
+    tokenGradient.addColorStop(0.72, '#020617');
+    tokenGradient.addColorStop(1, powerUp.color);
+    ctx.fillStyle = tokenGradient;
     ctx.beginPath();
     ctx.arc(0, 0, POWER_UP_RADIUS, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
+    ctx.strokeStyle = powerUp.color;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(-2, -3, POWER_UP_RADIUS - 4, Math.PI * 1.08, Math.PI * 1.76);
+    ctx.stroke();
     ctx.fillStyle = '#fff';
-    ctx.font = '27px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.font = '29px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(powerUp.symbol, 0, 0);
@@ -770,8 +1026,11 @@ function drawPowerUps() {
 }
 
 function updatePaddle() {
-  if (keys.left) paddle.x = Math.max(0, paddle.x - 8);
-  if (keys.right) paddle.x = Math.min(WIDTH - paddle.width, paddle.x + 8);
+  const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+  const direction = keyboardDirection || gamepadAxis;
+  if (direction) {
+    paddle.x = Math.max(0, Math.min(WIDTH - paddle.width, paddle.x + direction * 8));
+  }
 
   if (ballLaunched === false) {
     ball.x = paddle.x + paddle.width / 2;
@@ -812,8 +1071,43 @@ function updateParticles() {
   multiplierTimer = Math.max(0, multiplierTimer - 1);
   if (multiplierTimer === 0) scoreMultiplier = 1;
   lightningTimer = Math.max(0, lightningTimer - 1);
-  boosterHudTimer = Math.max(0, boosterHudTimer - 1);
-  if (boosterHudTimer === 0) boosterHudKey = null;
+  if (speedEffectTimer > 0) {
+    speedEffectTimer -= 1;
+    if (speedEffectTimer === 0) {
+      speedEffect = null;
+      const normalSpeed = DIFFICULTIES[settings.difficulty].launchSpeed;
+      if (ballLaunched) Object.assign(ball, setBallSpeed(ball, normalSpeed));
+      extraBalls.forEach((extraBall) => Object.assign(extraBall, setBallSpeed(extraBall, normalSpeed)));
+    }
+  }
+  boosterHudMessages = boosterHudMessages
+    .map((message) => ({ ...message, timer: message.timer - 1 }))
+    .filter((message) => message.timer > 0);
+  if (boosterCelebration) {
+    boosterCelebration.life -= 1;
+    if (boosterCelebration.life <= 0) boosterCelebration = null;
+  }
+}
+
+function getActiveSpeedTarget() {
+  const difficulty = DIFFICULTIES[settings.difficulty];
+  if (speedEffect === 'turtle') return Math.max(3.5, difficulty.launchSpeed * 0.8);
+  if (speedEffect === 'feather') return Math.max(3.9, difficulty.launchSpeed * 0.9);
+  if (speedEffect === 'turbo') return difficulty.maxSpeed;
+  return null;
+}
+
+function enforceBallSpeed(gameBall) {
+  const targetSpeed = getActiveSpeedTarget();
+  if (targetSpeed) return setBallSpeed(gameBall, targetSpeed);
+  return capBallVelocity(gameBall, DIFFICULTIES[settings.difficulty].maxSpeed);
+}
+
+function activateSpeedEffect(effect) {
+  speedEffect = effect;
+  speedEffectTimer = SPEED_EFFECT_DURATIONS[effect];
+  if (ballLaunched) Object.assign(ball, enforceBallSpeed(ball));
+  extraBalls.forEach((extraBall) => Object.assign(extraBall, enforceBallSpeed(extraBall)));
 }
 
 function updatePowerUps() {
@@ -854,11 +1148,21 @@ function updatePowerUps() {
       catchCharges = updated.catchCharges ?? catchCharges;
       piercingHits = updated.piercingHits ?? piercingHits;
       shieldCharges = updated.shieldCharges ?? shieldCharges;
-      boosterHudKey = `boosterHud${powerUp.type[0].toUpperCase()}${powerUp.type.slice(1)}`;
-      boosterHudTimer = 210;
+      const boosterHudKey = `boosterHud${powerUp.type[0].toUpperCase()}${powerUp.type.slice(1)}`;
+      boosterHudMessages = [
+        ...boosterHudMessages.filter((message) => message.key !== boosterHudKey),
+        { key: boosterHudKey, timer: 360 }
+      ].slice(-2);
+      boosterCelebration = {
+        type: powerUp.type,
+        symbol: powerUp.symbol,
+        color: powerUp.color,
+        life: 90,
+        maxLife: 90
+      };
       spawnImpactFeedback(powerUp.x, powerUp.y - 10, powerUp.symbol, powerUp.color, true);
       if (powerUp.type === 'slow' || powerUp.type === 'gravity') {
-        speedEffect = powerUp.type === 'slow' ? 'turtle' : 'feather';
+        activateSpeedEffect(powerUp.type === 'slow' ? 'turtle' : 'feather');
         setStatus(powerUp.type === 'slow' ? 'turtleStatus' : 'featherStatus');
         spawnImpactFeedback(
           WIDTH / 2,
@@ -871,6 +1175,7 @@ function updatePowerUps() {
         playTone(powerUp.type === 'slow' ? 190 : 310, 0.18, 'sine');
       }
       if (powerUp.type === 'multi') {
+        activateSpeedEffect('turbo');
         playTone(980, 0.08, 'triangle');
       }
       if (powerUp.type === 'multiball') {
@@ -903,13 +1208,7 @@ function launchBall() {
   const nextVelocity = getLaunchVelocityFromPointer(targetX, targetY, ball.x, ball.y, launchSpeed);
   ball.vx = nextVelocity.vx;
   ball.vy = nextVelocity.vy;
-  const maxSpeed = difficulty.maxSpeed;
-  const speedMagnitude = Math.hypot(ball.vx, ball.vy);
-  if (speedMagnitude > maxSpeed) {
-    const scale = maxSpeed / speedMagnitude;
-    ball.vx *= scale;
-    ball.vy *= scale;
-  }
+  Object.assign(ball, enforceBallSpeed(ball));
   ballLaunched = true;
   setStatus();
 }
@@ -924,6 +1223,7 @@ function updateExtraBalls() {
     const bounced = bounceOffWalls(extraBall, WIDTH, HEIGHT);
     Object.assign(extraBall, bounced);
     collideWithPaddle(extraBall, paddle);
+    Object.assign(extraBall, enforceBallSpeed(extraBall));
 
     for (const brick of bricks) {
       if (!brick.alive || brick.hitCooldown > 0) continue;
@@ -981,15 +1281,10 @@ function updateBall() {
   ball.y = bounced.y;
   ball.vx = bounced.vx;
   ball.vy = bounced.vy;
-  const maxSpeed = DIFFICULTIES[settings.difficulty].maxSpeed;
-  const speedMagnitude = Math.hypot(ball.vx, ball.vy);
-  if (speedMagnitude > maxSpeed) {
-    const scale = maxSpeed / speedMagnitude;
-    ball.vx *= scale;
-    ball.vy *= scale;
-  }
+  Object.assign(ball, enforceBallSpeed(ball));
 
   if (collideWithPaddle(ball, paddle)) {
+    Object.assign(ball, enforceBallSpeed(ball));
     playTone(520, 0.05, 'square');
     if (catchCharges > 0) {
       catchCharges -= 1;
@@ -1101,34 +1396,33 @@ function updateBall() {
       ball.vx = 0;
       ball.vy = 0;
       speedEffect = null;
+      speedEffectTimer = 0;
       extraBalls.length = 0;
       powerUps.length = 0;
       setStatus('lostLife', { lives });
       spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lostLifeEffect'), '#f43f5e', false, 120);
       playTone(220, 0.12, 'sawtooth');
     } else {
-      const playerName = activePlayerName;
-      const entryId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      leaderboard = addLeaderboardEntry(leaderboard, {
-        id: entryId,
-        name: playerName,
-        score,
-        difficulty: settings.difficulty
-      });
-      const scoreWasAdded = leaderboard.some((entry) => entry.id === entryId);
-      saveLeaderboard();
-
-      if (score > highScore) {
+      const isNewRecord = score > highScore;
+      if (isNewRecord) {
         highScore = score;
-        highScoreName = playerName;
         localStorage.setItem('neon-breakout-high-score', String(highScore));
-        localStorage.setItem('neon-breakout-high-score-name', highScoreName);
-        setStatus('newRecord', { name: playerName });
-      } else if (scoreWasAdded) {
-        setStatus('madeLeaderboard', { name: playerName });
-      } else {
-        setStatus('gameOver');
       }
+      if (qualifiesForLeaderboard(leaderboard, score)) {
+        pendingScoreEntry = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          score,
+          difficulty: settings.difficulty,
+          isNewRecord
+        };
+        setTimeout(() => {
+          highScorePlayerNameInput.value = activePlayerName;
+          highScoreDialog.showModal();
+          highScorePlayerNameInput.focus();
+          highScorePlayerNameInput.select();
+        }, 0);
+      }
+      setStatus();
       gameActive = false;
     }
     return;
@@ -1146,6 +1440,7 @@ function updateBall() {
     ball.vx = 0;
     ball.vy = 0;
     speedEffect = null;
+    speedEffectTimer = 0;
     extraBalls.length = 0;
     setStatus('levelComplete', { level });
     playTone(940, 0.12, 'sine');
@@ -1163,78 +1458,10 @@ function draw() {
   drawBall();
   extraBalls.forEach((extraBall) => drawBall(extraBall));
   drawLightningEffect();
+  drawActivePowerUpEffects();
   drawImpactEffects();
 
-  if (combo > 0) {
-    ctx.save();
-    ctx.fillStyle = combo >= 3 ? '#facc15' : '#7dd3fc';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(t('combo', { combo }), 20, 28);
-    ctx.restore();
-  }
-
-  if (boosterHudKey) {
-    ctx.save();
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = 'bold 12px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.shadowColor = '#22d3ee';
-    ctx.shadowBlur = 8;
-    ctx.fillText(t(boosterHudKey), WIDTH / 2, 48);
-    ctx.restore();
-  }
-
-  if (speedEffect && !boosterHudKey) {
-    ctx.save();
-    ctx.fillStyle = speedEffect === 'turtle' ? '#86efac' : '#fbbf24';
-    ctx.font = 'bold 12px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.fillText(t(speedEffect === 'turtle' ? 'speedTurtle' : 'speedFeather'), 20, 46);
-    ctx.restore();
-  }
-
-  if (scoreMultiplier > 1) {
-    ctx.save();
-    ctx.fillStyle = '#e879f9';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(t('doublePoints', { seconds: Math.ceil(multiplierTimer / 60) }), WIDTH - 20, 28);
-    ctx.restore();
-  }
-
-  if (lightningTimer > 0 && !boosterHudKey) {
-    ctx.save();
-    ctx.fillStyle = '#fde047';
-    ctx.font = 'bold 12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.shadowColor = '#a855f7';
-    ctx.shadowBlur = 10;
-    ctx.fillText(t('lightningHud', { seconds: Math.ceil(lightningTimer / 60) }), WIDTH / 2, 48);
-    ctx.restore();
-  }
-
-  if (shieldCharges > 0) {
-    ctx.save();
-    ctx.fillStyle = '#5eead4';
-    ctx.font = 'bold 17px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.shadowColor = '#34d399';
-    ctx.shadowBlur = 8;
-    ctx.fillText(`🛡️ ${shieldCharges}`, WIDTH - 20, 50);
-    ctx.restore();
-  }
-
-  const activeEffects = [
-    catchCharges > 0 ? `🧲 ${catchCharges}` : null,
-    piercingHits > 0 ? `🔥 ${piercingHits}` : null
-  ].filter(Boolean);
-  if (activeEffects.length > 0) {
-    ctx.save();
-    ctx.fillStyle = '#5eead4';
-    ctx.font = 'bold 13px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(activeEffects.join(' · '), WIDTH - 20, 70);
-    ctx.restore();
-  }
+  drawTopInformation();
 
   if (!ballLaunched && pointerAim) {
     ctx.save();
@@ -1249,6 +1476,155 @@ function draw() {
   drawGameOverScreen();
   ctx.restore();
 
+}
+
+function drawTopInformation() {
+  const speedStatus = speedEffect
+    ? {
+        turtle: { key: 'speedTurtle', color: '#86efac' },
+        feather: { key: 'speedFeather', color: '#fbbf24' },
+        turbo: { key: 'speedTurbo', color: '#fb7185' }
+      }[speedEffect]
+    : null;
+  const statuses = [
+    gamePaused
+      ? { text: t('paused'), color: '#facc15' }
+      : null,
+    combo > 0
+      ? { text: t('combo', { combo }), color: combo >= 3 ? '#facc15' : '#7dd3fc' }
+      : null,
+    speedStatus
+      ? {
+          text: t(speedStatus.key, { seconds: Math.ceil(speedEffectTimer / 60) }),
+          color: speedStatus.color
+        }
+      : null,
+    scoreMultiplier > 1
+      ? { text: t('doublePoints', { seconds: Math.ceil(multiplierTimer / 60) }), color: '#e879f9' }
+      : null,
+    lightningTimer > 0
+      ? { text: t('lightningHud', { seconds: Math.ceil(lightningTimer / 60) }), color: '#fde047' }
+      : null,
+    shieldCharges > 0
+      ? {
+          kind: 'shield',
+          count: shieldCharges,
+          color: '#5eead4'
+        }
+      : null,
+    catchCharges > 0 || piercingHits > 0
+      ? {
+          text: [
+            catchCharges > 0 ? `🧲 ${catchCharges}` : null,
+            piercingHits > 0 ? `🔥 ${piercingHits}` : null
+          ].filter(Boolean).join('  ·  '),
+          color: '#5eead4'
+        }
+      : null
+  ].filter(Boolean);
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  let startY = 10;
+  const readableStatusKeys = new Set(['caughtBall', 'lostLife', 'levelComplete', 'shieldSaved']);
+  const bannerMessages = boosterHudMessages.length > 0
+    ? boosterHudMessages.map((message) => t(message.key))
+    : readableStatusKeys.has(currentStatus.key)
+      ? [t(currentStatus.key, currentStatus.values)]
+      : [];
+  if (bannerMessages.length > 0) {
+    const bannerGap = 6;
+    const bannerY = 8;
+    const bannerWidth = (WIDTH - 24 - bannerGap * (bannerMessages.length - 1)) / bannerMessages.length;
+    const bannerHeight = 24;
+    bannerMessages.forEach((bannerText, index) => {
+      const bannerX = 12 + index * (bannerWidth + bannerGap);
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.72)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 9);
+      ctx.fill();
+      ctx.stroke();
+      drawFittedHudText(
+        bannerText,
+        bannerX + bannerWidth / 2,
+        bannerY + bannerHeight / 2,
+        bannerWidth - 14,
+        bannerMessages.length > 1 ? 12 : 14,
+        '#f8fafc'
+      );
+    });
+    startY = 38;
+  }
+
+  const gap = 6;
+  const chipWidth = (WIDTH - 24 - gap) / 2;
+  const chipHeight = 22;
+  statuses.forEach((status, index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const x = 12 + column * (chipWidth + gap);
+    const y = startY + row * (chipHeight + 4);
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+    ctx.strokeStyle = `${status.color}99`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x, y, chipWidth, chipHeight, 8);
+    ctx.fill();
+    ctx.stroke();
+    if (status.kind === 'shield') {
+      drawShieldStatus(x + chipWidth / 2, y + chipHeight / 2, status.count, status.color);
+    } else {
+      drawFittedHudText(status.text, x + chipWidth / 2, y + chipHeight / 2, chipWidth - 12, 13, status.color);
+    }
+  });
+  ctx.restore();
+}
+
+function drawShieldStatus(centerX, centerY, count, color) {
+  const iconX = centerX - 18;
+  const iconY = centerY - 8;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = 'rgba(94, 234, 212, 0.2)';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 5;
+  ctx.beginPath();
+  ctx.moveTo(iconX, iconY);
+  ctx.lineTo(iconX + 13, iconY + 3);
+  ctx.lineTo(iconX + 11, iconY + 11);
+  ctx.quadraticCurveTo(iconX + 7, iconY + 16, iconX, iconY + 18);
+  ctx.quadraticCurveTo(iconX - 7, iconY + 16, iconX - 11, iconY + 11);
+  ctx.lineTo(iconX - 13, iconY + 3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = '900 16px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`× ${count}`, centerX + 3, centerY + 1);
+  ctx.restore();
+}
+
+function drawFittedHudText(text, x, y, maxWidth, preferredSize, color) {
+  let fontSize = preferredSize;
+  do {
+    ctx.font = `bold ${fontSize}px "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    if (ctx.measureText(text).width <= maxWidth) break;
+    fontSize -= 0.5;
+  } while (fontSize > 11.5);
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 5;
+  ctx.fillText(text, x, y, maxWidth);
+  ctx.shadowBlur = 0;
 }
 
 function loop() {
@@ -1266,8 +1642,31 @@ function loop() {
 }
 
 window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && document.fullscreenElement) {
+    event.preventDefault();
+    document.exitFullscreen().catch((error) => {
+      console.error('Could not exit fullscreen:', error);
+    });
+    return;
+  }
   if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') keys.left = true;
   if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') keys.right = true;
+  if (event.key === ' ' && !isInteractiveElement(event.target)) {
+    event.preventDefault();
+    if (event.repeat) return;
+    if (!startScreen.hidden) {
+      startGame();
+    } else if (gameActive && ballLaunched) {
+      gamePaused = !gamePaused;
+      setStatus(gamePaused ? 'paused' : null);
+    } else if (gameActive) {
+      launchBall();
+    }
+  }
+  if (event.key === 'F11') {
+    event.preventDefault();
+    toggleFullscreen();
+  }
 });
 
 window.addEventListener('keyup', (event) => {
@@ -1293,33 +1692,152 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 
 restartButton.addEventListener('click', resetGame);
-startPlayerNameInput.value = activePlayerName;
+function startGame() {
+  if (startScreen.hidden) return;
+  startScreen.hidden = true;
+  gameShell.hidden = false;
+  resetGame();
+}
+
 startForm?.addEventListener('submit', (event) => {
   event.preventDefault();
-  const enteredPlayerName = startPlayerNameInput.value.trim().slice(0, 12);
+  startGame();
+});
+highScoreDialog?.addEventListener('cancel', (event) => event.preventDefault());
+highScoreForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!pendingScoreEntry) {
+    highScoreDialog.close();
+    return;
+  }
+
+  const enteredPlayerName = highScorePlayerNameInput.value.trim().slice(0, 12);
   activePlayerName = enteredPlayerName || t('defaultPlayerName');
+  leaderboard = addLeaderboardEntry(leaderboard, {
+    id: pendingScoreEntry.id,
+    name: activePlayerName,
+    score: pendingScoreEntry.score,
+    difficulty: pendingScoreEntry.difficulty
+  });
+  saveLeaderboard();
+
   try {
     if (enteredPlayerName) {
       localStorage.setItem('neon-breakout-player-name', enteredPlayerName);
     } else {
       localStorage.removeItem('neon-breakout-player-name');
     }
+    if (pendingScoreEntry.isNewRecord) {
+      highScoreName = activePlayerName;
+      localStorage.setItem('neon-breakout-high-score-name', highScoreName);
+    }
   } catch (error) {
     console.error('Could not save player name:', error);
   }
-  startScreen.hidden = true;
-  gameShell.hidden = false;
-  resetGame();
+
+  pendingScoreEntry = null;
+  highScoreDialog.close();
+  renderLeaderboard();
 });
-menuButton?.addEventListener('click', () => {
+function openMenu() {
+  if (!startScreen.hidden || menuDialog.open || highScoreDialog?.open) return;
   gamePaused = true;
   renderLeaderboard();
   menuDialog.showModal();
-});
+}
+
+function toggleMenu() {
+  if (menuDialog.open) {
+    menuDialog.close();
+  } else {
+    openMenu();
+  }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  } catch (error) {
+    console.error('Could not toggle fullscreen:', error);
+  }
+}
+
+function updateFullscreenButton() {
+  const active = Boolean(document.fullscreenElement);
+  fullscreenButton.textContent = active ? '🗗' : '⛶';
+  fullscreenButton.setAttribute('aria-label', t(active ? 'exitFullscreen' : 'fullscreen'));
+  fullscreenButton.title = t(active ? 'exitFullscreen' : 'fullscreen');
+}
+
+function isInteractiveElement(target) {
+  return target instanceof HTMLElement && Boolean(target.closest('button, input, select, textarea, dialog'));
+}
+
+function moveDialogFocus(direction) {
+  const dialog = menuDialog.open ? menuDialog : highScoreDialog?.open ? highScoreDialog : null;
+  if (!dialog) return;
+  const controls = [...dialog.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled])')];
+  if (controls.length === 0) return;
+  const currentIndex = controls.indexOf(document.activeElement);
+  const nextIndex = currentIndex < 0
+    ? 0
+    : (currentIndex + direction + controls.length) % controls.length;
+  controls[nextIndex].focus();
+}
+
+function pollGamepad() {
+  const gamepad = [...(navigator.getGamepads?.() || [])].find(Boolean);
+  if (!gamepad) {
+    gamepadAxis = 0;
+    previousGamepadButtons = [];
+    requestAnimationFrame(pollGamepad);
+    return;
+  }
+
+  const buttons = gamepad.buttons.map((button) => button.pressed);
+  const justPressed = (index) => buttons[index] && !previousGamepadButtons[index];
+  const stick = Math.abs(gamepad.axes[0] || 0) >= 0.18 ? gamepad.axes[0] : 0;
+  const dpad = (buttons[15] ? 1 : 0) - (buttons[14] ? 1 : 0);
+  gamepadAxis = dpad || stick;
+
+  if (justPressed(0)) {
+    if (!startScreen.hidden) {
+      startGame();
+    } else if (menuDialog.open || highScoreDialog?.open) {
+      document.activeElement?.click?.();
+    } else {
+      launchBall();
+    }
+  }
+  if (justPressed(1) && menuDialog.open) menuDialog.close();
+  if (justPressed(9)) toggleMenu();
+  if (justPressed(3)) toggleFullscreen();
+  if (menuDialog.open || highScoreDialog?.open) {
+    if (justPressed(12) || justPressed(14)) moveDialogFocus(-1);
+    if (justPressed(13) || justPressed(15)) moveDialogFocus(1);
+    gamepadAxis = 0;
+  }
+
+  previousGamepadButtons = buttons;
+  requestAnimationFrame(pollGamepad);
+}
+
+menuButton?.addEventListener('click', openMenu);
+fullscreenButton?.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', updateFullscreenButton);
 closeMenuButton?.addEventListener('click', () => menuDialog.close());
 document.querySelectorAll('[data-menu-target]').forEach((button) => {
   button.addEventListener('click', () => {
     document.querySelectorAll('.menu-panel').forEach((panel) => panel.classList.remove('active'));
+    document.querySelectorAll('[data-menu-target]').forEach((tab) => {
+      const selected = tab === button;
+      tab.classList.toggle('active', selected);
+      tab.setAttribute('aria-selected', String(selected));
+    });
     document.getElementById(button.dataset.menuTarget)?.classList.add('active');
   });
 });
@@ -1366,7 +1884,9 @@ effectsToggle?.addEventListener('change', () => {
   saveSettings();
 });
 applyTranslations();
+updateFullscreenButton();
 createBricks();
 updateHud();
 setStatus('ready');
 draw();
+requestAnimationFrame(pollGamepad);

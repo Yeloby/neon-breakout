@@ -24,14 +24,15 @@
         color: #f8fafc;
         display: grid;
         place-items: center;
-        height: 100vh;
-        padding: 8px;
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: 3px;
         box-sizing: border-box;
         overflow: hidden;
       }
       .start-screen {
         position: relative;
-        width: min(96vw, 900px);
+        width: min(96vw, 900px, calc(96dvh * 2));
         aspect-ratio: 2 / 1;
         overflow: hidden;
         border: 2px solid rgba(125, 211, 252, 0.72);
@@ -77,29 +78,6 @@
         justify-items: center;
         gap: 7px;
       }
-      .start-form label {
-        color: #e0f2fe;
-        font-size: 0.78rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-      .start-form input {
-        width: min(220px, 62vw);
-        box-sizing: border-box;
-        border: 1px solid rgba(34, 211, 238, 0.72);
-        border-radius: 999px;
-        padding: 8px 14px;
-        color: #f8fafc;
-        background: rgba(2, 6, 23, 0.88);
-        text-align: center;
-        font-weight: 700;
-        outline: none;
-      }
-      .start-form input:focus {
-        border-color: #facc15;
-        box-shadow: 0 0 14px rgba(250, 204, 21, 0.38);
-      }
       .start-button {
         min-width: 150px;
         padding: 11px 28px;
@@ -109,30 +87,33 @@
       }
       .game-shell {
         box-sizing: border-box;
-        width: min(96vw, 520px);
-        max-height: calc(100vh - 16px);
+        width: min(100%, calc((100dvh - 92px) * 0.75 + 22px), 760px);
+        height: calc(100dvh - 6px);
         background: rgba(2, 6, 23, 0.82);
         backdrop-filter: blur(18px);
-        padding: 10px 14px;
-        border-radius: 24px;
+        padding: 6px 10px;
+        border-radius: 20px;
         box-shadow: 0 24px 80px rgba(2, 6, 23, 0.55);
         border: 1px solid rgba(34, 211, 238, 0.23);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        overflow: hidden;
       }
       .title-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        min-height: 58px;
-        margin-bottom: 6px;
+        min-height: 38px;
+        margin-bottom: 3px;
         gap: 8px;
       }
       .title-brand {
         margin-left: auto;
-        width: 66px;
+        width: 60px;
       }
       .game-logo {
         display: block;
-        width: 102px;
+        width: 88px;
         height: auto;
         object-fit: contain;
         background: transparent;
@@ -147,27 +128,49 @@
         color: #bae6fd;
       }
       .title-row button {
-        padding: 7px 14px;
+        padding: 6px 11px;
+      }
+      .restart-icon {
+        width: 32px;
+        padding-inline: 0 !important;
+        font-size: 1.2rem;
+      }
+      .fullscreen-icon {
+        width: 32px;
+        padding-inline: 0 !important;
+        font-size: 1rem;
+      }
+      .canvas-wrap {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       canvas {
+        box-sizing: border-box;
         display: block;
-        width: min(100%, calc((100vh - 230px) * 0.75));
-        height: auto;
+        width: auto;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        aspect-ratio: 3 / 4;
         margin: 0 auto;
         border: 3px solid rgba(34, 211, 238, 0.95);
         border-radius: 18px;
         box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 36px rgba(34, 211, 238, 0.18);
+        touch-action: none;
       }
       .hud {
-        margin-top: 7px;
+        margin-top: 3px;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
+        gap: 5px;
       }
       .stat-card {
         background: rgba(15, 23, 42, 0.9);
-        border-radius: 14px;
-        padding: 6px 9px;
+        border-radius: 10px;
+        padding: 3px 6px;
         border: 1px solid rgba(34, 211, 238, 0.2);
         display: flex;
         flex-direction: column;
@@ -181,24 +184,6 @@
       .stat-card strong {
         font-size: 1rem;
       }
-      .controls {
-        margin-top: 7px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-      }
-      .controls button {
-        flex: 0 0 auto;
-        white-space: nowrap;
-      }
-      .status-controls {
-        min-height: 42px;
-        align-items: flex-start;
-      }
-      .restart-controls {
-        min-height: 34px;
-      }
       button {
         border: 0;
         border-radius: 999px;
@@ -209,28 +194,16 @@
         cursor: pointer;
         box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
       }
-      .status {
-        color: #bfdbfe;
-        font-size: 0.92rem;
-        line-height: 1.3;
-        height: 2.6em;
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-      }
-      .name-form {
-        display: flex;
-        gap: 8px;
-        margin: 7px 0 5px;
-      }
-      .name-form input {
-        flex: 1;
-        border: 1px solid rgba(34, 211, 238, 0.28);
-        border-radius: 999px;
-        padding: 8px 12px;
-        background: rgba(15, 23, 42, 0.9);
-        color: #f8fafc;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
       .leaderboard {
         margin: 5px 0 7px;
@@ -271,8 +244,8 @@
       }
       dialog {
         width: min(88vw, 480px);
-        height: min(620px, 82vh);
-        overflow: hidden;
+        max-height: min(620px, 82dvh);
+        overflow: auto;
         border: 1px solid rgba(34, 211, 238, 0.4);
         border-radius: 20px;
         padding: 22px;
@@ -309,12 +282,78 @@
         padding: 7px 4px;
         font-size: 0.8rem;
         min-height: 42px;
+        color: #bae6fd;
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(34, 211, 238, 0.18);
+        box-shadow: none;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+      .menu-tabs button:hover,
+      .menu-tabs button:focus-visible {
+        border-color: rgba(34, 211, 238, 0.72);
+        transform: translateY(-1px);
+      }
+      .menu-tabs button.active {
+        color: #082f49;
+        background: linear-gradient(135deg, #67e8f9, #facc15);
+        border-color: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 0 18px rgba(34, 211, 238, 0.26);
       }
       .menu-panel {
         display: none;
       }
       .menu-panel.active {
         display: block;
+        animation: menu-panel-in 140ms ease-out;
+      }
+      @keyframes menu-panel-in {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .high-score-dialog {
+        width: min(86vw, 380px);
+        height: auto;
+        text-align: center;
+      }
+      .high-score-dialog form {
+        display: grid;
+        justify-items: center;
+        gap: 12px;
+      }
+      .high-score-dialog h2,
+      .high-score-dialog p {
+        margin: 0;
+      }
+      .high-score-dialog h2 {
+        color: #facc15;
+        text-shadow: 0 0 14px rgba(250, 204, 21, 0.55);
+      }
+      .high-score-dialog label {
+        color: #7dd3fc;
+        font-weight: 800;
+      }
+      .high-score-dialog input {
+        width: min(240px, 68vw);
+        box-sizing: border-box;
+        border: 1px solid rgba(34, 211, 238, 0.72);
+        border-radius: 999px;
+        padding: 10px 14px;
+        color: #f8fafc;
+        background: #0f172a;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 700;
+        outline: none;
+      }
+      .high-score-dialog input:focus {
+        border-color: #facc15;
+        box-shadow: 0 0 14px rgba(250, 204, 21, 0.38);
       }
       .setting {
         display: flex;
@@ -322,6 +361,10 @@
         align-items: center;
         gap: 16px;
         margin: 12px 0;
+        padding: 9px 11px;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(34, 211, 238, 0.12);
       }
       select {
         border: 1px solid rgba(34, 211, 238, 0.3);
@@ -331,13 +374,50 @@
         color: #f8fafc;
       }
       .booster-list {
-        padding-left: 20px;
-        color: #cbd5e1;
-        line-height: 1.35;
-        columns: 2;
-        column-gap: 24px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+        margin: 12px 0 0;
+        padding: 0;
+        list-style: none;
+        color: #e2e8f0;
+      }
+      .booster-list li {
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        padding: 7px 9px;
+        border-radius: 12px;
+        background:
+          linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(8, 47, 73, 0.64));
+        border: 1px solid rgba(34, 211, 238, 0.2);
+        font-size: 0.79rem;
+        font-weight: 650;
+        line-height: 1.22;
+        box-shadow: inset 3px 0 0 rgba(34, 211, 238, 0.72);
+      }
+      .booster-list li:nth-child(3n + 2) {
+        box-shadow: inset 3px 0 0 rgba(244, 114, 182, 0.78);
+      }
+      .booster-list li:nth-child(3n) {
+        box-shadow: inset 3px 0 0 rgba(250, 204, 21, 0.78);
       }
       @media (max-width: 560px) {
+        .game-shell {
+          width: 100%;
+          height: calc(100dvh - 4px);
+          padding-inline: 5px;
+          border-radius: 14px;
+        }
+        .game-logo {
+          width: 75px;
+        }
+        .title-brand {
+          width: 48px;
+        }
+        .title-row button {
+          padding: 6px 9px;
+        }
         .hud {
           gap: 5px;
         }
@@ -345,8 +425,34 @@
           padding: 5px;
         }
         .booster-list {
-          columns: 1;
+          grid-template-columns: 1fr;
         }
+      }
+      @media (max-height: 680px) {
+        .title-row {
+          min-height: 32px;
+        }
+        .game-logo {
+          width: 72px;
+        }
+        .title-brand {
+          width: 46px;
+        }
+        .stat-card {
+          padding-block: 1px;
+        }
+        .label {
+          font-size: 0.62rem;
+        }
+        .stat-card strong {
+          font-size: 0.88rem;
+        }
+      }
+      :fullscreen .game-shell {
+        width: min(100vw, calc((100dvh - 86px) * 0.75 + 22px), 900px);
+        height: 100dvh;
+        border-radius: 0;
+        border-block: 0;
       }
     </style>
   </head>
@@ -356,8 +462,6 @@
       <div class="start-content">
         <img class="yeloby-logo start-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <form id="startForm" class="start-form">
-          <label for="startPlayerName" data-i18n="playerName">Spillernavn</label>
-          <input id="startPlayerName" type="text" maxlength="12" data-i18n-placeholder="playerNamePlaceholder" />
           <button id="startButton" class="start-button" type="submit" data-i18n="start">Start</button>
         </form>
       </div>
@@ -366,9 +470,13 @@
       <div class="title-row">
         <img class="game-logo" src="./artwork/neon-breakout-logo-1.4.5.png" alt="Neon Breakout" />
         <img class="yeloby-logo title-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
+        <button id="restartButton" class="restart-icon" type="button" title="Start på nytt" data-i18n-aria-label="restart">↻</button>
+        <button id="fullscreenButton" class="fullscreen-icon" type="button" title="Fullskjerm" data-i18n-aria-label="fullscreen">⛶</button>
         <button id="menuButton" type="button" data-i18n="menu">Meny</button>
       </div>
-      <canvas id="game" width="480" height="640"></canvas>
+      <div class="canvas-wrap">
+        <canvas id="game" width="480" height="640"></canvas>
+      </div>
       <div class="hud">
         <div class="stat-card">
           <span class="label" data-i18n="score">Poeng</span>
@@ -387,12 +495,7 @@
           <strong id="lives">3</strong>
         </div>
       </div>
-      <div class="controls status-controls">
-        <div id="status" class="status" data-i18n="ready">Klar til spill.</div>
-      </div>
-      <div class="controls restart-controls">
-        <button id="restartButton" type="button" data-i18n="restart">Start på nytt</button>
-      </div>
+      <div id="status" class="sr-only" aria-live="polite" data-i18n="ready">Klar til spill.</div>
     </div>
     <dialog id="menuDialog">
       <div class="menu-header">
@@ -400,7 +503,7 @@
         <button id="closeMenuButton" type="button" data-i18n="close">Lukk</button>
       </div>
       <nav class="menu-tabs" aria-label="Menyvalg" data-i18n-aria-label="menuLabel">
-        <button type="button" data-menu-target="settingsPanel" data-i18n="settings">Innstillinger</button>
+        <button class="active" type="button" data-menu-target="settingsPanel" data-i18n="settings" aria-selected="true">Innstillinger</button>
         <button type="button" data-menu-target="scoresPanel" data-i18n="topTen">Topp 10</button>
         <button type="button" data-menu-target="boostersPanel" data-i18n="boosters">Boostere</button>
         <button type="button" data-menu-target="aboutPanel" data-i18n="about">Om</button>
@@ -430,6 +533,8 @@
           <span data-i18n="visualEffects">Visuelle effekter</span>
           <input id="effectsToggle" type="checkbox" />
         </label>
+        <small data-i18n="gamepadHelp">Gamepad: venstre spak/D-pad flytter, A skyter, Start åpner menyen og Y bytter fullskjerm.</small>
+        <br />
         <small data-i18n="difficultyNextGame">Vanskelighetsgraden brukes fra neste nye spill.</small>
       </section>
       <section id="scoresPanel" class="menu-section menu-panel leaderboard">
@@ -439,29 +544,39 @@
       <section id="boostersPanel" class="menu-section menu-panel">
         <h3 data-i18n="boosters">Boostere</h3>
         <ul class="booster-list">
-          <li data-i18n="boosterLife">❤️ Ekstraliv (maks fem)</li>
-          <li data-i18n="boosterDouble">2️⃣ Doble poeng i 10 sekunder</li>
-          <li data-i18n="boosterCatch">🧲 Fanger ballen for ny sikting</li>
-          <li data-i18n="boosterFireball">🔥 Ildball går gjennom fem klosser</li>
-          <li data-i18n="boosterShield">🛡️ Skjold redder én tapt ball</li>
-          <li data-i18n="boosterWide">↔️ Gjør padelen ett trinn bredere (maks fem)</li>
-          <li data-i18n="boosterTurtle">🐢 Bremser ballen kraftig</li>
-          <li data-i18n="boosterFocus">🎯 Gir ballen en mer kontrollert bane</li>
-          <li data-i18n="boosterScore">💎 Gir 50 bonuspoeng før vanskelighetsskalering</li>
-          <li data-i18n="boosterLightning">⚡ Gir elektrisk ball, skalerte bonuspoeng, bredere padel og 50 % ekstra treffpoeng i 8 sekunder</li>
-          <li data-i18n="boosterTurbo">🚀 Gir turbo og skalerte bonuspoeng</li>
-          <li data-i18n="boosterMultiball">🫧 Lager to ekstra baller</li>
-          <li data-i18n="boosterFeather">🪶 Gir ballen en svevende, roligere fart</li>
-          <li data-i18n="boosterJackpot">🎰 Gir 100 jackpotpoeng før vanskelighetsskalering</li>
+          <li data-i18n="boosterLife">💖 Ekstra liv · maks 5</li>
+          <li data-i18n="boosterDouble">2️⃣ Doble poeng · 10 s</li>
+          <li data-i18n="boosterCatch">🧲 Fang ballen · sikt på nytt</li>
+          <li data-i18n="boosterFireball">🔥 Gjennom 5 klosser</li>
+          <li data-i18n="boosterShield">🛡️ Redder én ball</li>
+          <li data-i18n="boosterWide">↔️ Bredere padel · maks 5 trinn</li>
+          <li data-i18n="boosterTurtle">🐢 Lavere fart · 4 s</li>
+          <li data-i18n="boosterFocus">🎯 Rettere ballbane</li>
+          <li data-i18n="boosterScore">💎 +50 poeng</li>
+          <li data-i18n="boosterLightning">⚡ Lynkule · +50 % · 8 s</li>
+          <li data-i18n="boosterTurbo">🚀 Toppfart · 5 s</li>
+          <li data-i18n="boosterMultiball">🫧 To ekstra baller</li>
+          <li data-i18n="boosterFeather">🪶 Svevefart · 6 s</li>
+          <li data-i18n="boosterJackpot">🎰 +100 poeng</li>
         </ul>
       </section>
       <section id="aboutPanel" class="menu-section menu-panel">
         <h3><span data-i18n="about">Om</span> Neon Breakout</h3>
         <img class="yeloby-logo about-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <p data-i18n="brandPromise">Avslappende spill for alle, med neon, fantasi og emoji-magi.</p>
-        <p data-i18n="version">Versjon 1.4.5</p>
+        <p data-i18n="version">Versjon 1.5.1</p>
+        <p data-i18n="freeSoftwareNotice">Fri programvare · GNU GPLv3+</p>
         <p data-i18n="developer">Utvikler og © 2026: Johan Slåttavik</p>
       </section>
+    </dialog>
+    <dialog id="highScoreDialog" class="high-score-dialog">
+      <form id="highScoreForm" method="dialog">
+        <h2 data-i18n="newHighScoreTitle">Ny toppscore!</h2>
+        <p data-i18n="highScoreNamePrompt">Skriv inn navnet som skal vises på poengtavlen.</p>
+        <label for="highScorePlayerName" data-i18n="playerName">Spillernavn</label>
+        <input id="highScorePlayerName" type="text" maxlength="12" data-i18n-placeholder="playerNamePlaceholder" />
+        <button type="submit" data-i18n="saveScore">Lagre poengsum</button>
+      </form>
     </dialog>
     <script type="module" src="./main.js"></script>
   </body>

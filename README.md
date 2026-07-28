@@ -2,29 +2,29 @@
 
 ![Neon Breakout – håndtegnet retro-boxart](artwork/neon-breakout-social-preview-1.4.5.jpg)
 
-Et fargerikt Breakout-spill for Linux, utviklet av **Yeloby**. Neon Breakout
-kombinerer klassisk arkadespill med neonfarger, emoji-boostere, varierte brett
-og en avslappende retroestetikk.
+[Norsk](README.md) · [English](README.en.md)
 
-[**Last ned nyeste versjon**](https://github.com/Yeloby/neon-breakout/releases/latest)
+Et fargerikt Breakout-spill for Linux – skapt av **Yeloby** med neon, rom,
+emoji-boostere og klassisk arkadefart.
 
-## Om spillet
+**[Last ned](https://github.com/Yeloby/neon-breakout/releases/latest)**
+· **[Kildekode](https://github.com/Yeloby/neon-breakout)**
+· **[Rapporter en feil](https://github.com/Yeloby/neon-breakout/issues)**
 
-- Norsk og engelsk språk
-- Tre vanskelighetsgrader med egen fart og poengberegning
-- Varierte blokkformasjoner og forsterkede klosser
-- Fjorten boostere, blant annet multiball, ildball og elektrisk ball
-- Skiftende rombakgrunner, komboer og lokale topplister
-- Støtte for tastatur, mus og berøringsflate
+## Spillet
 
-## Installering
+- Norsk og engelsk
+- Tre vanskelighetsgrader med ulik fart og poengberegning
+- Varierte brett og forsterkede klosser
+- Fjorten boostere, blant annet multiball, ildball og lynkule
+- Komboer, rombakgrunner og lokale poengtavler
+- Tastatur, mus, berøringsflate og gamepad
 
-Alle offisielle pakker finnes under
-[nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
+## Installer
 
-### Ubuntu, Debian, Linux Mint og Pop!_OS
+### Debian, Ubuntu, Linux Mint og Pop!_OS
 
-Legg til den signerte Yeloby-kilden og installer spillet:
+Legg til Yelobys signerte pakkekilde én gang:
 
 ```bash
 curl -fLO https://yeloby.github.io/neon-breakout/apt/yeloby-archive-keyring.deb
@@ -33,24 +33,13 @@ sudo apt update
 sudo apt install neon-breakout
 ```
 
-### Fedora, openSUSE og andre RPM-baserte systemer
+### Arch Linux og andre distribusjoner
 
-Last ned `.rpm`-filen. På Fedora:
+Flatpak fungerer på tvers av distribusjoner:
 
-```bash
-sudo dnf install ./neon-breakout-*.x86_64.rpm
-```
+**[Åpne i COSMIC Store, GNOME Software eller Discover](https://yeloby.github.io/neon-breakout/flatpak/neon-breakout.flatpakref)**
 
-På openSUSE:
-
-```bash
-sudo zypper install ./neon-breakout-*.x86_64.rpm
-```
-
-### Arch Linux og Arch-baserte systemer
-
-Installer Flatpak med `sudo pacman -S flatpak` dersom det ikke allerede finnes
-på systemet. Legg deretter til Yeloby-kilden og installer spillet:
+Eller installer fra terminalen:
 
 ```bash
 flatpak remote-add --if-not-exists yeloby \
@@ -58,35 +47,28 @@ flatpak remote-add --if-not-exists yeloby \
 flatpak install yeloby io.github.Yeloby.NeonBreakout
 ```
 
-### AppImage
-
-AppImage krever ingen systeminstallasjon og fungerer på de fleste
-Linux-distribusjoner:
+RPM, AppImage og andre pakker finnes under
+[nyeste utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
+AppImage kan startes direkte:
 
 ```bash
 chmod +x Neon.Breakout-*.AppImage
 ./Neon.Breakout-*.AppImage
 ```
 
-## Oppdatering
-
-Installerte du spillet fra Yeloby-kilden på et Debian-basert system, kommer nye
-versjoner gjennom den vanlige systemoppdateringen:
+## Oppdater
 
 ```bash
-sudo apt update
-sudo apt upgrade
-```
+# Debian-baserte systemer
+sudo apt update && sudo apt upgrade
 
-Flatpak-utgaven oppdateres med:
-
-```bash
+# Flatpak
 flatpak update
 ```
 
-AppImage og manuelt installerte RPM-pakker erstattes med pakken fra
-[nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
-Innstillinger, spillernavn og lokale poengsummer beholdes ved oppdatering.
+Manuelt installerte RPM- og AppImage-utgaver erstattes med pakken fra
+[nyeste utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
+Innstillinger og lokale poengsummer beholdes.
 
 ## Utvikling
 
@@ -98,13 +80,20 @@ npm test
 npm start
 ```
 
-Bygg installasjonspakker lokalt med:
+Bygg Linux-pakker med `npm run build:linux`.
 
-```bash
-npm run build:linux
-```
+## Fri programvare
 
-## Lisens og opphav
+Neon Breakout er fri programvare, utgitt under
+[GNU GPLv3 eller nyere](LICENSE). Du kan bruke, studere, endre og dele spillet
+videre på lisensens vilkår.
 
-Utviklet av Johan Slåttavik under merkenavnet Yeloby.
-© 2026 Johan Slåttavik. Alle rettigheter forbeholdt.
+Spillet står på skuldrene til Linux, Node.js, Electron og hele
+FOSS-fellesskapet. **Takk til alle som skriver kode, dokumenterer, tester,
+pakker og deler.**
+
+---
+
+Copyright © 2026 Johan Slåttavik / **Yeloby**
+
+Lisensiert under [GNU GPLv3 eller nyere](LICENSE).

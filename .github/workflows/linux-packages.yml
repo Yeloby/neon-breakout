@@ -47,6 +47,12 @@ jobs:
       - name: Bygg Linux-pakker
         run: npm run build:linux
 
+      - name: Installer Snapcraft
+        run: sudo snap install snapcraft --classic
+
+      - name: Bygg Snap-pakke
+        run: snapcraft pack --destructive-mode
+
       - name: Installer Flatpak-verktøy
         run: |
           sudo apt-get install -y flatpak flatpak-builder
@@ -69,6 +75,7 @@ jobs:
             dist/*.tar.gz
             dist/*.flatpak
             dist/latest-linux.yml
+            ./*.snap
             flatpak-repo/**
           if-no-files-found: error
 
@@ -80,13 +87,26 @@ jobs:
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             gh release upload "${GITHUB_REF_NAME}" \
               dist/*.AppImage dist/*.deb dist/*.rpm dist/*.tar.gz dist/*.flatpak \
+              ./*.snap \
               --clobber
           else
             gh release create "${GITHUB_REF_NAME}" \
               dist/*.AppImage dist/*.deb dist/*.rpm dist/*.tar.gz dist/*.flatpak \
+              ./*.snap \
               --generate-notes \
               --title "Neon Breakout ${GITHUB_REF_NAME}"
           fi
+
+      - name: Publiser til Snap Store
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          if [ -z "${SNAPCRAFT_STORE_CREDENTIALS}" ]; then
+            echo "::warning::SNAPCRAFT_STORE_CREDENTIALS mangler; Snap-pakken ligger fortsatt i GitHub-utgivelsen."
+            exit 0
+          fi
+          snapcraft upload --release=stable ./*.snap
 
   publish-apt:
     if: >-
@@ -175,6 +195,17 @@ jobs:
             'Homepage=https://github.com/Yeloby' \
             "GPGKey=${YELOBY_GPG_KEY}" \
             > site/flatpak/yeloby.flatpakrepo
+          printf '%s\n' \
+            '[Flatpak Ref]' \
+            'Name=io.github.Yeloby.NeonBreakout' \
+            'Branch=master' \
+            'Title=Neon Breakout' \
+            'Comment=A colorful and relaxing Breakout game by Yeloby' \
+            'Url=https://yeloby.github.io/neon-breakout/flatpak/' \
+            'RuntimeRepo=https://flathub.org/repo/flathub.flatpakrepo' \
+            'IsRuntime=false' \
+            "GPGKey=${YELOBY_GPG_KEY}" \
+            > site/flatpak/neon-breakout.flatpakref
 
       - name: Klargjør GitHub Pages
         uses: actions/configure-pages@v5

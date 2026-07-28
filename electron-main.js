@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,12 +13,18 @@ function createWindow() {
     return;
   }
 
+  const workArea = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    width: 980,
-    height: 860,
-    minWidth: 560,
-    minHeight: 600,
+    width: Math.min(720, workArea.width),
+    height: Math.min(900, workArea.height),
+    minWidth: 520,
+    minHeight: 620,
+    useContentSize: true,
+    fullscreenable: true,
+    maximizable: true,
+    backgroundColor: '#020617',
     title: 'Neon Breakout',
+    icon: path.join(__dirname, 'artwork', 'neon-breakout-app-icon.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

@@ -192,6 +192,20 @@ export function getMultiballVelocities(vx, vy) {
   ];
 }
 
+export function capBallVelocity(ball, maxSpeed) {
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed === 0 || speed <= maxSpeed) return { ...ball };
+  const scale = maxSpeed / speed;
+  return { ...ball, vx: ball.vx * scale, vy: ball.vy * scale };
+}
+
+export function setBallSpeed(ball, targetSpeed) {
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed === 0 || targetSpeed <= 0) return { ...ball };
+  const scale = targetSpeed / speed;
+  return { ...ball, vx: ball.vx * scale, vy: ball.vy * scale };
+}
+
 export function applyPowerUp(powerUp, state) {
   if (!powerUp) return state;
 
@@ -207,8 +221,7 @@ export function applyPowerUp(powerUp, state) {
   }
 
   if (powerUp.type === 'slow') {
-    nextState.ball.vx = scaleVelocity(nextState.ball.vx, 0.55, 1.8);
-    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.55, 1.8);
+    scaleBallVelocity(nextState.ball, 0.55, 2.4);
   }
 
   if (powerUp.type === 'score') {
@@ -232,8 +245,7 @@ export function applyPowerUp(powerUp, state) {
   }
 
   if (powerUp.type === 'gravity') {
-    nextState.ball.vx = scaleVelocity(nextState.ball.vx, 0.72, 2);
-    nextState.ball.vy = scaleVelocity(nextState.ball.vy, 0.72, 2);
+    scaleBallVelocity(nextState.ball, 0.72, 3);
   }
 
   if (powerUp.type === 'double') {
@@ -284,9 +296,13 @@ export function calculateBrickScore({
   return Math.round(baseScore * comboMultiplier * scoreMultiplier * difficultyMultiplier * lightningMultiplier);
 }
 
-function scaleVelocity(velocity, factor, minimumMagnitude) {
-  if (velocity === 0) return 0;
-  return Math.sign(velocity) * Math.max(minimumMagnitude, Math.abs(velocity * factor));
+function scaleBallVelocity(ball, factor, minimumSpeed) {
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed === 0) return;
+  const targetSpeed = Math.max(minimumSpeed, speed * factor);
+  const scale = targetSpeed / speed;
+  ball.vx *= scale;
+  ball.vy *= scale;
 }
 
 export function getLaunchVelocityFromPointer(pointerX, pointerY, ballX, ballY, speed = 7) {
@@ -303,6 +319,15 @@ export function addLeaderboardEntry(entries, entry, limit = 10) {
   return [...entries, entry]
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
+}
+
+export function qualifiesForLeaderboard(entries, score, limit = 10) {
+  if (!Number.isFinite(score) || score <= 0) return false;
+  const validScores = entries
+    .map((entry) => entry?.score)
+    .filter(Number.isFinite);
+  if (validScores.length < limit) return true;
+  return score > Math.min(...validScores);
 }
 
 export function pickWeightedPowerUp(powerUps, randomValue = Math.random()) {

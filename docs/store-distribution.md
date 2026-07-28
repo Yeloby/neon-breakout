@@ -2,13 +2,18 @@
 
 ## COSMIC Store, GNOME Software og KDE Discover
 
-Yeloby Flatpak-arkivet inneholder AppStream-metadata. Etter at brukeren har
-lagt til Yeloby-kilden, kan kompatible grafiske programbutikker vise og
-oppdatere spillet.
+Disse butikkene viser programvare fra konfigurerte pakkekilder; det finnes
+ingen egen innsending til COSMIC Store. Yeloby Flatpak-arkivet inneholder
+signering og AppStream-metadata og er derfor den direkte publiseringsveien.
 
-Standardoppføring uten at brukeren legger til en kilde krever normalt Flathub.
-Neon Breakout skal ikke sendes til Flathub så lenge prosjektet faller utenfor
-Flathubs gjeldende regler for KI-assistert innhold.
+Brukeren kan åpne `neon-breakout.flatpakref` for å legge til kilden og
+installere spillet grafisk. Deretter vises oppdateringer i COSMIC Store,
+GNOME Software og KDE Discover på vanlig måte.
+
+En forhåndskonfigurert standardoppføring krever normalt Flathub. Neon Breakout
+kan ikke sendes dit så lenge Flathubs regler forbyr apper med KI-assistert
+kode, dokumentasjon eller grafikk. Det skal derfor ikke opprettes en
+Flathub-innsending for prosjektet.
 
 ## Arch User Repository
 

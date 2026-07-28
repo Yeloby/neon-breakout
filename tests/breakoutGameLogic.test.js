@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getBrickCrackLines, getBrickHealth, getLevelLayout, getMultiballVelocities, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
+import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, capBallVelocity, collideWithPaddle, resolveBrickCollision, getBrickCrackLines, getBrickHealth, getLevelLayout, getMultiballVelocities, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp, qualifiesForLeaderboard, setBallSpeed } from '../breakoutGameLogic.js';
 
 test('bounceOffWalls reverses horizontal velocity when the ball hits a vertical wall', () => {
   const ball = { x: 6, y: 40, radius: 6, vx: -4, vy: 2 };
@@ -177,6 +177,24 @@ test('turtle slows the ball more strongly than feather', () => {
   assert.equal(Math.hypot(turtle.ball.vx, turtle.ball.vy) < Math.hypot(feather.ball.vx, feather.ball.vy), true);
   assert.equal(turtle.ball.vx, 3.3000000000000003);
   assert.equal(feather.ball.vx, 4.32);
+});
+
+test('speed effects impose truthful persistent speed limits', () => {
+  const capped = capBallVelocity({ x: 20, y: 30, vx: 5, vy: -5 }, 3.4);
+  assert.equal(Math.abs(Math.hypot(capped.vx, capped.vy) - 3.4) < 0.000001, true);
+  assert.equal(capped.vx > 0, true);
+  assert.equal(capped.vy < 0, true);
+
+  const stabilized = setBallSpeed({ x: 20, y: 30, vx: 2, vy: -1 }, 4.2);
+  assert.equal(Math.abs(Math.hypot(stabilized.vx, stabilized.vy) - 4.2) < 0.000001, true);
+});
+
+test('player name is only requested for a positive top-ten score', () => {
+  assert.equal(qualifiesForLeaderboard([], 0), false);
+  assert.equal(qualifiesForLeaderboard([], 120), true);
+  const fullBoard = Array.from({ length: 10 }, (_, index) => ({ score: 1000 - index * 50 }));
+  assert.equal(qualifiesForLeaderboard(fullBoard, 551), true);
+  assert.equal(qualifiesForLeaderboard(fullBoard, 550), false);
 });
 
 test('applyPowerUp grants a shield charge and speeds up the ball for turbo pickups', () => {
