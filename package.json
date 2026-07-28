@@ -1,6 +1,6 @@
 {
   "name": "neon-breakout",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": true,
   "license": "UNLICENSED",
   "homepage": "https://github.com/Yeloby/neon-breakout",
@@ -42,8 +42,9 @@
       "breakoutGameLogic.js",
       "electron-main.js",
       "package.json",
-      "artwork/neon-breakout-logo.png",
-      "artwork/neon-breakout-social-preview.jpg"
+      "artwork/neon-breakout-logo-1.4.4.png",
+      "artwork/neon-breakout-social-preview-1.4.4.jpg",
+      "artwork/yeloby-logo-1.4.4.png"
     ],
     "linux": {
       "target": [

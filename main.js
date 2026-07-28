@@ -4,7 +4,8 @@ import { getDefaultLanguage, translate } from './translations.js';
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const startScreen = document.getElementById('startScreen');
-const startButton = document.getElementById('startButton');
+const startForm = document.getElementById('startForm');
+const startPlayerNameInput = document.getElementById('startPlayerName');
 const gameShell = document.getElementById('gameShell');
 const scoreEl = document.getElementById('score');
 const levelEl = document.getElementById('level');
@@ -13,8 +14,6 @@ const statusEl = document.getElementById('status');
 const restartButton = document.getElementById('restartButton');
 const highScoreEl = document.getElementById('highScore');
 const leaderboardEl = document.getElementById('leaderboard');
-const nameForm = document.getElementById('nameForm');
-const playerNameInput = document.getElementById('playerName');
 const menuButton = document.getElementById('menuButton');
 const menuDialog = document.getElementById('menuDialog');
 const closeMenuButton = document.getElementById('closeMenuButton');
@@ -51,7 +50,10 @@ let gameActive = true;
 let animationFrameId = null;
 let keys = { left: false, right: false };
 let highScore = Number(localStorage.getItem('neon-breakout-high-score') || 0);
-let highScoreName = localStorage.getItem('neon-breakout-high-score-name') || 'ANON';
+const storedHighScoreName = localStorage.getItem('neon-breakout-high-score-name') || '';
+let highScoreName = !storedHighScoreName || storedHighScoreName === 'ANON'
+  ? t('defaultPlayerName')
+  : storedHighScoreName;
 let audioContext = null;
 let ballLaunched = false;
 let pointerAim = null;
@@ -68,7 +70,8 @@ let gamePaused = false;
 let paddlePulse = 0;
 let ballPulse = 0;
 let leaderboard = loadLeaderboard();
-let pendingLeaderboardEntryId = null;
+const storedPlayerName = localStorage.getItem('neon-breakout-player-name') || '';
+let activePlayerName = storedPlayerName === 'ANON' ? '' : storedPlayerName;
 let currentStatus = { key: null, values: {} };
 let boosterHudKey = null;
 let boosterHudTimer = 0;
@@ -117,7 +120,13 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  localStorage.setItem('neon-breakout-settings', JSON.stringify(settings));
+  try {
+    localStorage.setItem('neon-breakout-settings', JSON.stringify(settings));
+    return true;
+  } catch (error) {
+    console.error('Could not save game settings:', error);
+    return false;
+  }
 }
 
 function setStatus(key = null, values = {}) {
@@ -269,7 +278,7 @@ function spawnPowerUp(x, y) {
     { type: 'score', symbol: '💎', color: '#facc15', weight: 5 },
     { type: 'bonus', symbol: '⚡', color: '#c084fc', weight: 4 },
     { type: 'multi', symbol: '🚀', color: '#fb7185', weight: 3 },
-    { type: 'multiball', symbol: '🔵', color: '#60a5fa', weight: 2 },
+    { type: 'multiball', symbol: '🫧', color: '#60a5fa', weight: 2 },
     { type: 'shield', symbol: '🛡️', color: '#34d399', weight: 2 },
     { type: 'gravity', symbol: '🪶', color: '#f59e0b', weight: 3 },
     { type: 'focus', symbol: '🎯', color: '#818cf8', weight: 3 },
@@ -329,8 +338,6 @@ function resetGame() {
   speedEffect = null;
   boosterHudKey = null;
   boosterHudTimer = 0;
-  pendingLeaderboardEntryId = null;
-  nameForm.hidden = true;
   const startingPaddleWidth = DIFFICULTIES[settings.difficulty].paddleWidth;
   paddle.x = WIDTH / 2 - startingPaddleWidth / 2;
   paddle.width = startingPaddleWidth;
@@ -514,22 +521,76 @@ function drawBricks() {
     ctx.translate(shakeX, 0);
     if (settings.effects) {
       ctx.shadowColor = brick.color;
-      ctx.shadowBlur = Math.max(2, 10 - damage * 3) + Math.sin(performance.now() * 0.004 + brick.x) * 2;
+      ctx.shadowBlur = Math.max(1, 4 - damage);
     }
-    ctx.fillStyle = brick.color;
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    if (brick.maxHealth > 1) {
+      const armoredSurface = ctx.createLinearGradient(
+        brick.x,
+        brick.y,
+        brick.x,
+        brick.y + brick.height
+      );
+      armoredSurface.addColorStop(0, brick.maxHealth === 3 ? '#1e293b' : '#334155');
+      armoredSurface.addColorStop(0.48, brick.maxHealth === 3 ? '#0f172a' : '#1e293b');
+      armoredSurface.addColorStop(1, brick.maxHealth === 3 ? '#020617' : '#0f172a');
+      ctx.fillStyle = armoredSurface;
+    } else {
+      ctx.fillStyle = brick.color;
+    }
     ctx.beginPath();
     ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
     ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = brick.maxHealth > 1 ? brick.color : 'rgba(255,255,255,0.95)';
+    ctx.lineWidth = 1.25 + (brick.maxHealth - 1) * 0.65;
     ctx.stroke();
+
+    if (brick.maxHealth > 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(brick.x + 1.5, brick.y + 1.5, brick.width - 3, brick.height - 3, 4.5);
+      ctx.clip();
+
+      const armorShade = ctx.createLinearGradient(brick.x, brick.y, brick.x, brick.y + brick.height);
+      armorShade.addColorStop(0, `rgba(255,255,255,${brick.maxHealth === 3 ? 0.34 : 0.24})`);
+      armorShade.addColorStop(0.42, 'rgba(255,255,255,0.04)');
+      armorShade.addColorStop(0.55, 'rgba(2,6,23,0.06)');
+      armorShade.addColorStop(1, `rgba(2,6,23,${brick.maxHealth === 3 ? 0.4 : 0.28})`);
+      ctx.fillStyle = armorShade;
+      ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+      ctx.restore();
+
+      const inset = brick.maxHealth === 3 ? 3.5 : 4.5;
+      ctx.beginPath();
+      ctx.roundRect(
+        brick.x + inset,
+        brick.y + inset,
+        brick.width - inset * 2,
+        brick.height - inset * 2,
+        3
+      );
+      ctx.strokeStyle = brick.maxHealth === 3
+        ? 'rgba(15,23,42,0.72)'
+        : 'rgba(15,23,42,0.5)';
+      ctx.lineWidth = brick.maxHealth === 3 ? 1.8 : 1.2;
+      ctx.stroke();
+    }
 
     if (damage > 0) {
       ctx.shadowBlur = 0;
       ctx.fillStyle = `rgba(2, 6, 23, ${0.22 + damageRatio * 0.28})`;
+      ctx.beginPath();
+      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
       ctx.fill();
-      ctx.strokeStyle = `rgba(15, 23, 42, ${0.75 + damageRatio * 0.2})`;
+      ctx.strokeStyle = brick.maxHealth > 1
+        ? `rgba(224, 242, 254, ${0.78 + damageRatio * 0.2})`
+        : `rgba(15, 23, 42, ${0.75 + damageRatio * 0.2})`;
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
+      if (settings.effects && brick.maxHealth > 1) {
+        ctx.shadowColor = '#bae6fd';
+        ctx.shadowBlur = 4;
+      }
       getBrickCrackLines(brick.crackSeed, damage).forEach((line) => {
         ctx.beginPath();
         line.forEach(([x, y], index) => {
@@ -540,10 +601,13 @@ function drawBricks() {
         });
         ctx.stroke();
       });
+      ctx.shadowBlur = 0;
     }
 
     if (brick.hitFlash > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${brick.hitFlash / 14})`;
+      ctx.beginPath();
+      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
       ctx.fill();
       brick.hitFlash -= 1;
     }
@@ -561,6 +625,13 @@ function drawBallTrail() {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
+}
+
+function addBallTrailPoint(gameBall) {
+  if (!settings.effects) return;
+  ballTrail.push({ x: gameBall.x, y: gameBall.y, life: 12, maxLife: 12 });
+  const maximumTrailPoints = 18 * (extraBalls.length + 1);
+  while (ballTrail.length > maximumTrailPoints) ballTrail.shift();
 }
 
 function drawImpactEffects() {
@@ -593,6 +664,77 @@ function drawImpactEffects() {
     ctx.fillText(item.text, item.x, item.y);
     ctx.restore();
   });
+}
+
+function drawGameOverScreen() {
+  if (gameActive) return;
+
+  const panelX = 54;
+  const panelY = 205;
+  const panelWidth = WIDTH - panelX * 2;
+  const panelHeight = 232;
+  const time = performance.now() * 0.003;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(1, 4, 11, 0.78)';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.shadowColor = '#ec4899';
+  ctx.shadowBlur = 28;
+  ctx.fillStyle = 'rgba(7, 18, 37, 0.96)';
+  ctx.strokeStyle = '#22d3ee';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 24);
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.strokeStyle = '#facc15';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(panelX + 8, panelY + 8, panelWidth - 16, panelHeight - 16, 18);
+  ctx.stroke();
+
+  const decorations = [
+    { symbol: '✨', x: panelX + 34, y: panelY + 42 },
+    { symbol: '💥', x: panelX + panelWidth - 38, y: panelY + 50 },
+    { symbol: '🫧', x: panelX + 42, y: panelY + panelHeight - 32 },
+    { symbol: '🎮', x: panelX + panelWidth - 42, y: panelY + panelHeight - 34 }
+  ];
+  ctx.font = '24px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  decorations.forEach(({ symbol, x, y }, index) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(time + index) * 0.12);
+    ctx.fillText(symbol, 0, 0);
+    ctx.restore();
+  });
+
+  const titleGradient = ctx.createLinearGradient(panelX + 80, 0, panelX + panelWidth - 80, 0);
+  titleGradient.addColorStop(0, '#22d3ee');
+  titleGradient.addColorStop(0.5, '#facc15');
+  titleGradient.addColorStop(1, '#f472b6');
+  ctx.fillStyle = titleGradient;
+  ctx.font = '900 30px sans-serif';
+  ctx.shadowColor = '#db2777';
+  ctx.shadowBlur = 12;
+  ctx.fillText(t('gameOverTitle'), WIDTH / 2, panelY + 64);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 19px sans-serif';
+  ctx.fillText(t('gameOverScore', { score }), WIDTH / 2, panelY + 112);
+  ctx.fillStyle = '#a5f3fc';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.fillText(t('gameOverLevel', { level }), WIDTH / 2, panelY + 142);
+
+  ctx.fillStyle = '#fbcfe8';
+  ctx.font = 'bold 13px sans-serif';
+  ctx.fillText(t('gameOverPrompt'), WIDTH / 2, panelY + 188);
+  ctx.restore();
 }
 
 function drawParticles() {
@@ -777,6 +919,7 @@ function updateExtraBalls() {
     const extraBall = extraBalls[index];
     extraBall.x += extraBall.vx;
     extraBall.y += extraBall.vy;
+    addBallTrailPoint(extraBall);
 
     const bounced = bounceOffWalls(extraBall, WIDTH, HEIGHT);
     Object.assign(extraBall, bounced);
@@ -820,10 +963,7 @@ function updateBall() {
 
   ball.x += ball.vx;
   ball.y += ball.vy;
-  if (settings.effects) {
-    ballTrail.push({ x: ball.x, y: ball.y, life: 12, maxLife: 12 });
-    if (ballTrail.length > 18) ballTrail.shift();
-  }
+  addBallTrailPoint(ball);
   if (piercingHits > 0 && settings.effects && Math.random() > 0.55) {
     particles.push({
       x: ball.x,
@@ -967,8 +1107,7 @@ function updateBall() {
       spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lostLifeEffect'), '#f43f5e', false, 120);
       playTone(220, 0.12, 'sawtooth');
     } else {
-      const enteredName = playerNameInput?.value?.trim();
-      const playerName = enteredName || 'ANON';
+      const playerName = activePlayerName;
       const entryId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       leaderboard = addLeaderboardEntry(leaderboard, {
         id: entryId,
@@ -977,7 +1116,6 @@ function updateBall() {
         difficulty: settings.difficulty
       });
       const scoreWasAdded = leaderboard.some((entry) => entry.id === entryId);
-      pendingLeaderboardEntryId = scoreWasAdded ? entryId : null;
       saveLeaderboard();
 
       if (score > highScore) {
@@ -985,16 +1123,11 @@ function updateBall() {
         highScoreName = playerName;
         localStorage.setItem('neon-breakout-high-score', String(highScore));
         localStorage.setItem('neon-breakout-high-score-name', highScoreName);
-        setStatus('newRecord');
+        setStatus('newRecord', { name: playerName });
       } else if (scoreWasAdded) {
-        setStatus('madeLeaderboard');
+        setStatus('madeLeaderboard', { name: playerName });
       } else {
         setStatus('gameOver');
-      }
-      nameForm.hidden = !scoreWasAdded;
-      if (scoreWasAdded) {
-        playerNameInput.value = '';
-        playerNameInput?.focus();
       }
       gameActive = false;
     }
@@ -1113,6 +1246,7 @@ function draw() {
     ctx.stroke();
     ctx.restore();
   }
+  drawGameOverScreen();
   ctx.restore();
 
 }
@@ -1159,7 +1293,20 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 
 restartButton.addEventListener('click', resetGame);
-startButton?.addEventListener('click', () => {
+startPlayerNameInput.value = activePlayerName;
+startForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const enteredPlayerName = startPlayerNameInput.value.trim().slice(0, 12);
+  activePlayerName = enteredPlayerName || t('defaultPlayerName');
+  try {
+    if (enteredPlayerName) {
+      localStorage.setItem('neon-breakout-player-name', enteredPlayerName);
+    } else {
+      localStorage.removeItem('neon-breakout-player-name');
+    }
+  } catch (error) {
+    console.error('Could not save player name:', error);
+  }
   startScreen.hidden = true;
   gameShell.hidden = false;
   resetGame();
@@ -1188,9 +1335,21 @@ difficultySelect?.addEventListener('change', () => {
   saveSettings();
 });
 languageSelect?.addEventListener('change', () => {
-  settings.language = languageSelect.value;
-  saveSettings();
-  applyTranslations();
+  const previousLanguage = settings.language;
+  const nextLanguage = languageSelect.value === 'en' ? 'en' : 'no';
+
+  try {
+    settings.language = nextLanguage;
+    applyTranslations();
+    saveSettings();
+    draw();
+  } catch (error) {
+    console.error('Could not change language:', error);
+    settings.language = previousLanguage;
+    languageSelect.value = previousLanguage;
+    applyTranslations();
+    draw();
+  }
 });
 soundToggle?.addEventListener('change', () => {
   settings.sound = soundToggle.checked;
@@ -1206,31 +1365,6 @@ effectsToggle?.addEventListener('change', () => {
   }
   saveSettings();
 });
-const syncPlayerName = () => {
-  const name = playerNameInput?.value?.trim() || 'ANON';
-  playerNameInput.value = name;
-  const pendingEntry = leaderboard.find((entry) => entry.id === pendingLeaderboardEntryId);
-  if (pendingEntry?.score === highScore) {
-    highScoreName = name;
-    localStorage.setItem('neon-breakout-high-score-name', name);
-  }
-
-  leaderboard = leaderboard.map((entry) => {
-    if (entry.id !== pendingLeaderboardEntryId) return entry;
-    return { ...entry, name };
-  });
-
-  if (pendingLeaderboardEntryId) {
-    saveLeaderboard();
-    renderLeaderboard();
-  }
-};
-nameForm?.addEventListener('submit', (event) => {
-  event.preventDefault();
-  syncPlayerName();
-  setStatus();
-});
-
 applyTranslations();
 createBricks();
 updateHud();

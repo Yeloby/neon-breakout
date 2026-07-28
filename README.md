@@ -1,6 +1,6 @@
 # Neon Breakout
 
-![Håndmalt retro-cover med spilltro neonklosser og emoji-boostere](artwork/neon-breakout-social-preview.jpg)
+![Håndmalt retro-cover med tredimensjonale emoji-boostere](artwork/neon-breakout-social-preview-1.4.4.jpg)
 
 Neon Breakout er et fargerikt, moderne Breakout-spill for Linux. Spillet er
 bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
@@ -72,8 +72,8 @@ Ferdige filer legges i `dist/`:
 ### AppImage
 
 ```bash
-chmod +x "dist/Neon Breakout-1.4.3.AppImage"
-./dist/Neon\ Breakout-1.4.3.AppImage
+chmod +x "dist/Neon Breakout-1.4.4.AppImage"
+./dist/Neon\ Breakout-1.4.4.AppImage
 ```
 
 ### Debian-pakke
@@ -94,7 +94,7 @@ Releases og installeres med `sudo apt install ./pakkenavn.deb`.
 ### RPM-pakke
 
 ```bash
-sudo dnf install ./dist/neon-breakout-1.4.3.x86_64.rpm
+sudo dnf install ./dist/neon-breakout-1.4.4.x86_64.rpm
 ```
 
 ### Flatpak
@@ -115,14 +115,14 @@ Flatpak installeres først med `sudo pacman -S flatpak`. Den enkeltstående
 ### Portabel utgave
 
 ```bash
-tar -xzf dist/neon-breakout-1.4.3.tar.gz
-./neon-breakout-1.4.3/neon-breakout
+tar -xzf dist/neon-breakout-1.4.4.tar.gz
+./neon-breakout-1.4.4/neon-breakout
 ```
 
 ## Utgivelser
 
 GitHub Actions kjører tester og bygger alle Linux-formatene ved push og pull
-request. En versjonstag som `v1.4.3` oppretter automatisk en GitHub Release med
+request. En versjonstag som `v1.4.4` oppretter automatisk en GitHub Release med
 installasjonspakkene som nedlastbare filer.
 
 Genererte pakker og `node_modules` er utelatt fra Git-historikken via

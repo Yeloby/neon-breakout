@@ -9,7 +9,9 @@ export const TRANSLATIONS = {
     level: 'Nivå',
     lives: 'Liv',
     ready: 'Klar til spill.',
-    playerNamePlaceholder: 'Navn til poengtavlen',
+    playerName: 'Spillernavn',
+    playerNamePlaceholder: 'Skriv navn (valgfritt)',
+    defaultPlayerName: 'Spiller',
     saveName: 'Lagre navn',
     restart: 'Start på nytt',
     gameMenu: 'Spillmeny',
@@ -31,7 +33,7 @@ export const TRANSLATIONS = {
     visualEffects: 'Visuelle effekter',
     difficultyNextGame: 'Vanskelighetsgraden brukes fra neste nye spill.',
     fullScoreList: 'Hele poenglisten',
-    version: 'Versjon 1.4.3',
+    version: 'Versjon 1.4.4',
     reinforcedInfo: 'Fra nivå 3 kan forsterkede klosser kreve flere treff. Sprekker, svakere glød og mørkere overflate viser skaden.',
     builtWith: 'Linux-spill bygget med Electron 43',
     developer: 'Utvikler og © 2026: Johan Slåttavik',
@@ -53,9 +55,13 @@ export const TRANSLATIONS = {
     saved: 'REDDET!',
     lostLife: 'Du mistet et liv. {lives} liv igjen.',
     lostLifeEffect: 'LIV MISTET',
-    newRecord: 'Ny rekord! Skriv navn og trykk Lagre navn.',
-    madeLeaderboard: 'Du kom på poengtavlen! Skriv navn og trykk Lagre navn.',
+    newRecord: 'Ny rekord av {name}!',
+    madeLeaderboard: '{name} kom på poengtavlen!',
     gameOver: 'Du tapte. Start på nytt for å prøve igjen.',
+    gameOverTitle: 'SPILLET ER SLUTT!',
+    gameOverScore: 'POENG  {score}',
+    gameOverLevel: 'NIVÅ  {level}',
+    gameOverPrompt: 'Trykk «Start på nytt» for en ny runde',
     levelComplete: 'Nivå {level} klart! Klikk på banen for å skyte ballen.',
     combo: 'KOMBO {combo}',
     speedTurtle: 'FART: 🐢 SKILPADDE',
@@ -67,7 +73,7 @@ export const TRANSLATIONS = {
     boosterHudScore: '💎 BONUSPOENG',
     boosterHudBonus: '⚡ ELEKTRISK BALL · +50 % TREFFPOENG',
     boosterHudMulti: '🚀 TURBO · HØYERE BALLFART',
-    boosterHudMultiball: '🔵 MULTIBALL · TO EKSTRA BALLER',
+    boosterHudMultiball: '🫧 MULTIBALL · TO EKSTRA BALLER',
     boosterHudShield: '🛡️ SKJOLD · REDDER EN BALL',
     boosterHudGravity: '🪶 MYKERE, LAVERE BALLFART',
     boosterHudFocus: '🎯 RETTER BALLEN MER LODDRETT',
@@ -87,7 +93,7 @@ export const TRANSLATIONS = {
     boosterScore: '💎 Gir 50 bonuspoeng før vanskelighetsskalering',
     boosterLightning: '⚡ Gir elektrisk ball, skalerte bonuspoeng, bredere padel og 50 % ekstra treffpoeng i 8 sekunder',
     boosterTurbo: '🚀 Gir turbo og skalerte bonuspoeng',
-    boosterMultiball: '🔵 Lager to ekstra baller',
+    boosterMultiball: '🫧 Lager to ekstra baller',
     boosterFeather: '🪶 Gir ballen en svevende, roligere fart',
     boosterJackpot: '🎰 Gir 100 jackpotpoeng før vanskelighetsskalering'
   },
@@ -101,7 +107,9 @@ export const TRANSLATIONS = {
     level: 'Level',
     lives: 'Lives',
     ready: 'Ready to play.',
-    playerNamePlaceholder: 'Name for the leaderboard',
+    playerName: 'Player name',
+    playerNamePlaceholder: 'Enter name (optional)',
+    defaultPlayerName: 'Player',
     saveName: 'Save name',
     restart: 'Restart',
     gameMenu: 'Game menu',
@@ -123,7 +131,7 @@ export const TRANSLATIONS = {
     visualEffects: 'Visual effects',
     difficultyNextGame: 'The difficulty setting applies from the next new game.',
     fullScoreList: 'Full leaderboard',
-    version: 'Version 1.4.3',
+    version: 'Version 1.4.4',
     reinforcedInfo: 'From level 3, reinforced bricks may require several hits. Cracks, reduced glow and a darker surface show the damage.',
     builtWith: 'Linux game built with Electron 43',
     developer: 'Developer and © 2026: Johan Slåttavik',
@@ -145,9 +153,13 @@ export const TRANSLATIONS = {
     saved: 'SAVED!',
     lostLife: 'You lost a life. {lives} lives remaining.',
     lostLifeEffect: 'LIFE LOST',
-    newRecord: 'New record! Enter your name and press Save name.',
-    madeLeaderboard: 'You made the leaderboard! Enter your name and press Save name.',
+    newRecord: 'New record by {name}!',
+    madeLeaderboard: '{name} made the leaderboard!',
     gameOver: 'Game over. Restart to try again.',
+    gameOverTitle: 'GAME OVER!',
+    gameOverScore: 'SCORE  {score}',
+    gameOverLevel: 'LEVEL  {level}',
+    gameOverPrompt: 'Press “Restart” for another round',
     levelComplete: 'Level {level} complete! Click the playfield to launch the ball.',
     combo: 'COMBO {combo}',
     speedTurtle: 'SPEED: 🐢 TURTLE',
@@ -159,7 +171,7 @@ export const TRANSLATIONS = {
     boosterHudScore: '💎 BONUS POINTS',
     boosterHudBonus: '⚡ ELECTRIC BALL · +50% HIT SCORE',
     boosterHudMulti: '🚀 TURBO · HIGHER BALL SPEED',
-    boosterHudMultiball: '🔵 MULTIBALL · TWO EXTRA BALLS',
+    boosterHudMultiball: '🫧 MULTIBALL · TWO EXTRA BALLS',
     boosterHudShield: '🛡️ SHIELD · SAVES ONE BALL',
     boosterHudGravity: '🪶 GENTLER, LOWER BALL SPEED',
     boosterHudFocus: '🎯 AIMS THE BALL MORE VERTICALLY',
@@ -179,16 +191,14 @@ export const TRANSLATIONS = {
     boosterScore: '💎 Awards 50 points before difficulty scaling',
     boosterLightning: '⚡ Electrifies the ball, awards scaled points, widens the paddle and adds 50% hit points for 8 seconds',
     boosterTurbo: '🚀 Adds turbo and scaled bonus points',
-    boosterMultiball: '🔵 Creates two extra balls',
+    boosterMultiball: '🫧 Creates two extra balls',
     boosterFeather: '🪶 Gives the ball a gentler floating speed',
     boosterJackpot: '🎰 Awards 100 jackpot points before difficulty scaling'
   }
 };
 
-export function getDefaultLanguage(browserLanguage = '') {
-  return browserLanguage.toLowerCase().startsWith('no') || browserLanguage.toLowerCase().startsWith('nb')
-    ? 'no'
-    : 'en';
+export function getDefaultLanguage() {
+  return 'no';
 }
 
 export function translate(language, key, values = {}) {

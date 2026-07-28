@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getDefaultLanguage, TRANSLATIONS, translate } from '../translations.js';
 
-test('getDefaultLanguage selects Norwegian only for Norwegian browser locales', () => {
+test('getDefaultLanguage defaults to Norwegian regardless of browser locale', () => {
   assert.equal(getDefaultLanguage('nb-NO'), 'no');
   assert.equal(getDefaultLanguage('no-NO'), 'no');
-  assert.equal(getDefaultLanguage('en-GB'), 'en');
+  assert.equal(getDefaultLanguage('en-GB'), 'no');
 });
 
 test('translate returns localized text and replaces template values', () => {
