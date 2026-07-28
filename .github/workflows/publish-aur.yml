@@ -44,5 +44,6 @@ jobs:
             echo "AUR-pakken er allerede oppdatert."
             exit 0
           fi
-          git commit -m "Update to 1.5.2"
+          aur_version="$(sed -n 's/^pkgver=//p' PKGBUILD)"
+          git commit -m "Update to ${aur_version}"
           git push origin master
