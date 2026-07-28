@@ -1,0 +1,32 @@
+# Maintainer: Johan Slåttavik
+pkgname=neon-breakout-bin
+pkgver=1.4.3
+pkgrel=1
+pkgdesc="A colorful and relaxing Breakout game by Yeloby"
+arch=('x86_64')
+url="https://github.com/Yeloby/neon-breakout"
+license=('custom')
+depends=('gtk3' 'nss' 'alsa-lib' 'libxss')
+provides=('neon-breakout')
+conflicts=('neon-breakout')
+source=(
+  "neon-breakout-${pkgver}.tar.gz::${url}/releases/download/v${pkgver}/neon-breakout-${pkgver}.tar.gz"
+  "io.github.Yeloby.NeonBreakout.desktop::${url}/raw/v${pkgver}/packaging/flatpak/io.github.Yeloby.NeonBreakout.desktop"
+  "io.github.Yeloby.NeonBreakout.svg::${url}/raw/v${pkgver}/packaging/flatpak/io.github.Yeloby.NeonBreakout.svg"
+)
+sha256sums=(
+  '793090efaf860880ffbd3a733e7e5dfae1163455d632de669f9a5997fca71799'
+  'db8111eba782b0fa58cbfe12f78acda007912597d403e4d8078bc14406241893'
+  '8b4c87d41069f614b1f2fba14148a45fe8381d567869a6525779c025932ca0ab'
+)
+
+package() {
+  install -d "${pkgdir}/opt/neon-breakout"
+  cp -a "${srcdir}/neon-breakout-${pkgver}/." "${pkgdir}/opt/neon-breakout/"
+  install -d "${pkgdir}/usr/bin"
+  ln -s /opt/neon-breakout/neon-breakout "${pkgdir}/usr/bin/neon-breakout"
+  install -Dm644 "${srcdir}/io.github.Yeloby.NeonBreakout.desktop" \
+    "${pkgdir}/usr/share/applications/io.github.Yeloby.NeonBreakout.desktop"
+  install -Dm644 "${srcdir}/io.github.Yeloby.NeonBreakout.svg" \
+    "${pkgdir}/usr/share/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg"
+}

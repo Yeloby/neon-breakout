@@ -106,9 +106,10 @@ jobs:
       - name: Bygg signert Yeloby APT-arkiv
         env:
           APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          APT_GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
         run: |
-          if [ -z "${APT_GPG_PRIVATE_KEY}" ]; then
-            echo "::error::APT_GPG_PRIVATE_KEY må legges inn som GitHub Actions-secret."
+          if [ -z "${APT_GPG_PRIVATE_KEY}" ] || [ -z "${APT_GPG_PASSPHRASE}" ]; then
+            echo "::error::APT_GPG_PRIVATE_KEY og APT_GPG_PASSPHRASE må ligge som GitHub Actions-secrets."
             exit 1
           fi
 
@@ -143,9 +144,11 @@ jobs:
             -o APT::FTPArchive::Release::Components="main" \
             -o APT::FTPArchive::Release::Description="Relaxing games for everyone" \
             release dists/stable > dists/stable/Release
-          gpg --batch --yes --local-user "${APT_SIGNING_KEY}" \
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${APT_GPG_PASSPHRASE}" \
+            --local-user "${APT_SIGNING_KEY}" \
             --clearsign --output dists/stable/InRelease dists/stable/Release
-          gpg --batch --yes --local-user "${APT_SIGNING_KEY}" \
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${APT_GPG_PASSPHRASE}" \
+            --local-user "${APT_SIGNING_KEY}" \
             --detach-sign --armor --output dists/stable/Release.gpg dists/stable/Release
 
           cd "${GITHUB_WORKSPACE}"

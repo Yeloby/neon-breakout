@@ -15,8 +15,9 @@ gpg --export "Yeloby APT Repository" > yeloby-archive-keyring.gpg
 ```
 
 Legg hele innholdet i `yeloby-apt-private.asc` i GitHub Actions-secret
-`APT_GPG_PRIVATE_KEY`. Privatnøkkelen skal aldri legges i Git eller deles med
-brukerne. Oppbevar en sikker sikkerhetskopi utenfor prosjektmappen.
+`APT_GPG_PRIVATE_KEY`, og legg nøkkelpassordet i `APT_GPG_PASSPHRASE`.
+Privatnøkkelen skal aldri legges i Git eller deles med brukerne. Oppbevar en
+sikker sikkerhetskopi utenfor prosjektmappen.
 
 Aktiver GitHub Pages med **GitHub Actions** som kilde under
 **Settings → Pages → Build and deployment**.

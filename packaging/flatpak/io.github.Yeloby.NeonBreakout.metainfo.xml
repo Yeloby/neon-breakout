@@ -2,17 +2,39 @@
 <component type="desktop-application">
   <id>io.github.Yeloby.NeonBreakout</id>
   <name>Neon Breakout</name>
-  <summary>Et fargerikt og moderne Breakout-spill</summary>
+  <summary>A colorful and relaxing Breakout game</summary>
+  <summary xml:lang="no">Et fargerikt og avslappende Breakout-spill</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>LicenseRef-proprietary</project_license>
   <description>
-    <p>Neon Breakout er et moderne arkadespill med boostere, komboer, tre vanskelighetsgrader og lokal topp 10-liste.</p>
+    <p>Break neon bricks in a relaxing arcade game by Yeloby. Collect creative emoji power-ups, build combos and explore varied block formations across three difficulty modes.</p>
+    <p xml:lang="no">Knus neonklosser i et avslappende arkadespill fra Yeloby. Samle kreative emoji-boostere, bygg komboer og utforsk varierte blokkformasjoner på tre vanskelighetsgrader.</p>
   </description>
   <launchable type="desktop-id">io.github.Yeloby.NeonBreakout.desktop</launchable>
-  <developer id="io.github.Yeloby">
+  <developer id="io.github.yeloby">
     <name>Johan Slåttavik</name>
   </developer>
   <url type="homepage">https://github.com/Yeloby/neon-breakout</url>
+  <url type="bugtracker">https://github.com/Yeloby/neon-breakout/issues</url>
+  <categories>
+    <category>Game</category>
+    <category>ArcadeGame</category>
+  </categories>
+  <keywords>
+    <keyword>breakout</keyword>
+    <keyword>arcade</keyword>
+    <keyword>emoji</keyword>
+    <keyword>relaxing</keyword>
+    <keyword xml:lang="no">avslappende</keyword>
+  </keywords>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </supports>
+  <provides>
+    <binary>neon-breakout</binary>
+  </provides>
   <releases>
     <release version="1.4.3" date="2026-07-28"/>
     <release version="1.4.2" date="2026-07-28"/>

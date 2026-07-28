@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Neon Breakout
-Comment=Et fargerikt og moderne Breakout-spill
+Comment=A colorful and relaxing Breakout game
+Comment[no]=Et fargerikt og avslappende Breakout-spill
 Exec=neon-breakout
 Icon=io.github.Yeloby.NeonBreakout
 Terminal=false

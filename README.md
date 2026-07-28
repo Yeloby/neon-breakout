@@ -66,6 +66,7 @@ Ferdige filer legges i `dist/`:
 - `.deb` for Debian-baserte distribusjoner
 - `.rpm` for RPM-baserte distribusjoner
 - `.flatpak` for distribusjoner med Flatpak
+- Snap-oppskrift, AUR-oppskrift og COPR-spec for flere distribusjonskanaler
 - `.tar.gz` som portabel utgave
 
 ### AppImage
@@ -126,6 +127,11 @@ installasjonspakkene som nedlastbare filer.
 
 Genererte pakker og `node_modules` er utelatt fra Git-historikken via
 `.gitignore`.
+
+Detaljer for vedlikeholdere finnes i
+[`docs/store-distribution.md`](docs/store-distribution.md),
+[`docs/apt-repository.md`](docs/apt-repository.md) og
+[`docs/flatpak-repository.md`](docs/flatpak-repository.md).
 
 ## Prosjektstruktur
 
