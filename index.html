@@ -246,97 +246,104 @@
     <div class="game-shell">
       <div class="title-row">
         <strong>Neon Breakout</strong>
-        <button id="menuButton" type="button">Meny</button>
+        <button id="menuButton" type="button" data-i18n="menu">Meny</button>
       </div>
       <canvas id="game" width="480" height="640"></canvas>
       <div class="hud">
         <div class="stat-card">
-          <span class="label">Poeng</span>
+          <span class="label" data-i18n="score">Poeng</span>
           <strong id="score">0</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Rekord</span>
+          <span class="label" data-i18n="highScore">Rekord</span>
           <strong id="highScore">0</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Nivå</span>
+          <span class="label" data-i18n="level">Nivå</span>
           <strong id="level">1</strong>
         </div>
         <div class="stat-card">
-          <span class="label">Liv</span>
+          <span class="label" data-i18n="lives">Liv</span>
           <strong id="lives">3</strong>
         </div>
       </div>
       <div class="controls">
-        <div id="status" class="status">Klar til spill.</div>
+        <div id="status" class="status" data-i18n="ready">Klar til spill.</div>
       </div>
       <form id="nameForm" class="name-form" hidden>
-        <input id="playerName" type="text" maxlength="12" placeholder="Navn til poengtavlen" />
-        <button type="submit">Lagre navn</button>
+        <input id="playerName" type="text" maxlength="12" placeholder="Navn til poengtavlen" data-i18n-placeholder="playerNamePlaceholder" />
+        <button type="submit" data-i18n="saveName">Lagre navn</button>
       </form>
       <div class="controls">
-        <button id="restartButton" type="button">Start på nytt</button>
+        <button id="restartButton" type="button" data-i18n="restart">Start på nytt</button>
       </div>
     </div>
     <dialog id="menuDialog">
       <div class="menu-header">
-        <h2>Spillmeny</h2>
-        <button id="closeMenuButton" type="button">Lukk</button>
+        <h2 data-i18n="gameMenu">Spillmeny</h2>
+        <button id="closeMenuButton" type="button" data-i18n="close">Lukk</button>
       </div>
-      <nav class="menu-tabs" aria-label="Menyvalg">
-        <button type="button" data-menu-target="settingsPanel">Innstillinger</button>
-        <button type="button" data-menu-target="scoresPanel">Topp 10</button>
-        <button type="button" data-menu-target="boostersPanel">Boostere</button>
-        <button type="button" data-menu-target="aboutPanel">Om</button>
+      <nav class="menu-tabs" aria-label="Menyvalg" data-i18n-aria-label="menuLabel">
+        <button type="button" data-menu-target="settingsPanel" data-i18n="settings">Innstillinger</button>
+        <button type="button" data-menu-target="scoresPanel" data-i18n="topTen">Topp 10</button>
+        <button type="button" data-menu-target="boostersPanel" data-i18n="boosters">Boostere</button>
+        <button type="button" data-menu-target="aboutPanel" data-i18n="about">Om</button>
       </nav>
       <section id="settingsPanel" class="menu-section menu-panel active">
-        <h3>Innstillinger</h3>
+        <h3 data-i18n="settings">Innstillinger</h3>
         <label class="setting">
-          <span>Vanskelighetsgrad</span>
+          <span data-i18n="difficulty">Vanskelighetsgrad</span>
           <select id="difficultySelect">
-            <option value="easy">Lett</option>
-            <option value="normal">Normal</option>
-            <option value="hard">Vanskelig</option>
+            <option value="easy" data-i18n="easy">Lett</option>
+            <option value="normal" data-i18n="normal">Normal</option>
+            <option value="hard" data-i18n="hard">Vanskelig</option>
           </select>
         </label>
         <label class="setting">
-          <span>Lyd</span>
+          <span data-i18n="language">Språk</span>
+          <select id="languageSelect">
+            <option value="no" data-i18n="norwegian">Norsk</option>
+            <option value="en" data-i18n="english">English</option>
+          </select>
+        </label>
+        <label class="setting">
+          <span data-i18n="sound">Lyd</span>
           <input id="soundToggle" type="checkbox" />
         </label>
         <label class="setting">
-          <span>Visuelle effekter</span>
+          <span data-i18n="visualEffects">Visuelle effekter</span>
           <input id="effectsToggle" type="checkbox" />
         </label>
-        <small>Vanskelighetsgraden brukes fra neste nye spill.</small>
+        <small data-i18n="difficultyNextGame">Vanskelighetsgraden brukes fra neste nye spill.</small>
       </section>
       <section id="scoresPanel" class="menu-section menu-panel leaderboard">
-        <h3>Hele poenglisten</h3>
+        <h3 data-i18n="fullScoreList">Hele poenglisten</h3>
         <ol id="menuLeaderboard"></ol>
       </section>
       <section id="boostersPanel" class="menu-section menu-panel">
-        <h3>Boostere</h3>
+        <h3 data-i18n="boosters">Boostere</h3>
         <ul class="booster-list">
-          <li>❤️ Ekstraliv (maks fem)</li>
-          <li>2️⃣ Doble poeng i 10 sekunder</li>
-          <li>🧲 Fanger ballen for ny sikting</li>
-          <li>🔥 Ildball går gjennom fem klosser</li>
-          <li>🛡️ Skjold redder én tapt ball</li>
-          <li>↔️ Gjør padelen ett trinn bredere (maks fem)</li>
-          <li>🐢 Bremser ballen kraftig til omtrent 55 % fart</li>
-          <li>🎯 Gir ballen en mer kontrollert bane</li>
-          <li>💎 Gir 50 bonuspoeng før vanskelighetsskalering</li>
-          <li>⚡ Gir skalerte bonuspoeng, bredere padel og 50 % ekstra treffpoeng i 8 sekunder</li>
-          <li>🚀 Gir turbo og skalerte bonuspoeng</li>
-          <li>🪶 Gir en svevende ball med omtrent 72 % fart</li>
-          <li>🎰 Gir 100 jackpotpoeng før vanskelighetsskalering</li>
+          <li data-i18n="boosterLife">❤️ Ekstraliv (maks fem)</li>
+          <li data-i18n="boosterDouble">2️⃣ Doble poeng i 10 sekunder</li>
+          <li data-i18n="boosterCatch">🧲 Fanger ballen for ny sikting</li>
+          <li data-i18n="boosterFireball">🔥 Ildball går gjennom fem klosser</li>
+          <li data-i18n="boosterShield">🛡️ Skjold redder én tapt ball</li>
+          <li data-i18n="boosterWide">↔️ Gjør padelen ett trinn bredere (maks fem)</li>
+          <li data-i18n="boosterTurtle">🐢 Bremser ballen kraftig</li>
+          <li data-i18n="boosterFocus">🎯 Gir ballen en mer kontrollert bane</li>
+          <li data-i18n="boosterScore">💎 Gir 50 bonuspoeng før vanskelighetsskalering</li>
+          <li data-i18n="boosterLightning">⚡ Gir skalerte bonuspoeng, bredere padel og 50 % ekstra treffpoeng i 8 sekunder</li>
+          <li data-i18n="boosterTurbo">🚀 Gir turbo og skalerte bonuspoeng</li>
+          <li data-i18n="boosterFeather">🪶 Gir ballen en svevende, roligere fart</li>
+          <li data-i18n="boosterJackpot">🎰 Gir 100 jackpotpoeng før vanskelighetsskalering</li>
         </ul>
       </section>
       <section id="aboutPanel" class="menu-section menu-panel">
-        <h3>Om Neon Breakout</h3>
-        <p>Versjon 1.3.0</p>
-        <p>Fra nivå 3 kan forsterkede klosser kreve flere treff. Sprekker, svakere glød og mørkere overflate viser skaden.</p>
-        <p>Linux-spill bygget med Electron 43</p>
-        <p>Utvikler og © 2026: Johan Slåttavik</p>
+        <h3><span data-i18n="about">Om</span> Neon Breakout</h3>
+        <p data-i18n="version">Versjon 1.4.0</p>
+        <p data-i18n="reinforcedInfo">Fra nivå 3 kan forsterkede klosser kreve flere treff. Sprekker, svakere glød og mørkere overflate viser skaden.</p>
+        <p data-i18n="builtWith">Linux-spill bygget med Electron 43</p>
+        <p data-i18n="developer">Utvikler og © 2026: Johan Slåttavik</p>
       </section>
     </dialog>
     <script type="module" src="./main.js"></script>

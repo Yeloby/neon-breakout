@@ -1,4 +1,5 @@
 import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
+import { getDefaultLanguage, translate } from './translations.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -17,6 +18,7 @@ const closeMenuButton = document.getElementById('closeMenuButton');
 const difficultySelect = document.getElementById('difficultySelect');
 const soundToggle = document.getElementById('soundToggle');
 const effectsToggle = document.getElementById('effectsToggle');
+const languageSelect = document.getElementById('languageSelect');
 const menuLeaderboardEl = document.getElementById('menuLeaderboard');
 
 const WIDTH = canvas.width;
@@ -36,13 +38,8 @@ const DIFFICULTIES = {
   normal: { paddleWidth: 88, launchSpeed: 5.8, maxSpeed: 6.8, scoreMultiplier: 1, boosterChance: 0.32 },
   hard: { paddleWidth: 72, launchSpeed: 7, maxSpeed: 8.4, scoreMultiplier: 1.4, boosterChance: 0.26 }
 };
-const DIFFICULTY_LABELS = {
-  easy: 'Lett',
-  normal: 'Normal',
-  hard: 'Vanskelig',
-  unknown: 'Ukjent'
-};
 const settings = loadSettings();
+const t = (key, values) => translate(settings.language, key, values);
 
 let score = 0;
 let level = 1;
@@ -63,11 +60,13 @@ let lightningTimer = 0;
 let catchCharges = 0;
 let piercingHits = 0;
 let shieldCharges = 0;
+let speedEffect = null;
 let gamePaused = false;
 let paddlePulse = 0;
 let ballPulse = 0;
 let leaderboard = loadLeaderboard();
 let pendingLeaderboardEntryId = null;
+let currentStatus = { key: null, values: {} };
 
 const paddle = {
   x: WIDTH / 2 - DIFFICULTIES[settings.difficulty].paddleWidth / 2,
@@ -95,16 +94,44 @@ function loadSettings() {
     const stored = JSON.parse(localStorage.getItem('neon-breakout-settings') || '{}');
     return {
       difficulty: DIFFICULTIES[stored.difficulty] ? stored.difficulty : 'normal',
+      language: stored.language === 'no' || stored.language === 'en'
+        ? stored.language
+        : getDefaultLanguage(navigator.language),
       sound: stored.sound !== false,
       effects: stored.effects !== false
     };
   } catch {
-    return { difficulty: 'normal', sound: true, effects: true };
+    return {
+      difficulty: 'normal',
+      language: getDefaultLanguage(navigator.language),
+      sound: true,
+      effects: true
+    };
   }
 }
 
 function saveSettings() {
   localStorage.setItem('neon-breakout-settings', JSON.stringify(settings));
+}
+
+function setStatus(key = null, values = {}) {
+  currentStatus = { key, values };
+  statusEl.textContent = key ? t(key, values) : '';
+}
+
+function applyTranslations() {
+  document.documentElement.lang = settings.language;
+  document.querySelectorAll('[data-i18n]').forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+    element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
+  });
+  if (currentStatus.key) statusEl.textContent = t(currentStatus.key, currentStatus.values);
+  renderLeaderboard();
 }
 
 function playTone(frequency, duration, type = 'sine') {
@@ -160,7 +187,7 @@ function renderLeaderboardInto(target, limit) {
   target.replaceChildren();
   if (leaderboard.length === 0) {
     const emptyEntry = document.createElement('li');
-    emptyEntry.textContent = 'Ingen rekord ennå.';
+    emptyEntry.textContent = t('noScore');
     target.append(emptyEntry);
     return;
   }
@@ -175,7 +202,7 @@ function renderLeaderboardInto(target, limit) {
     rank.textContent = `#${index + 1}`;
     name.textContent = entry.name;
     difficulty.className = 'difficulty';
-    difficulty.textContent = DIFFICULTY_LABELS[entry.difficulty] || DIFFICULTY_LABELS.unknown;
+    difficulty.textContent = t(entry.difficulty);
     entryScore.textContent = String(entry.score);
     item.append(rank, name, difficulty, entryScore);
     target.append(item);
@@ -221,7 +248,7 @@ function celebrateLevel() {
   floatingTexts.push({
     x: WIDTH / 2,
     y: HEIGHT / 2,
-    text: `NIVÅ ${level}!`,
+    text: t('levelCelebration', { level }),
     color: '#facc15',
     life: 90,
     maxLife: 90,
@@ -291,6 +318,7 @@ function resetGame() {
   catchCharges = 0;
   piercingHits = 0;
   shieldCharges = 0;
+  speedEffect = null;
   pendingLeaderboardEntryId = null;
   nameForm.hidden = true;
   const startingPaddleWidth = DIFFICULTIES[settings.difficulty].paddleWidth;
@@ -307,7 +335,7 @@ function resetGame() {
   powerUps.length = 0;
   createBricks();
   updateHud();
-  statusEl.textContent = '';
+  setStatus();
   if (animationFrameId) cancelAnimationFrame(animationFrameId);
   animationFrameId = requestAnimationFrame(loop);
 }
@@ -584,7 +612,6 @@ function updatePowerUps() {
       powerUp.x + powerUpRadius >= paddle.x &&
       powerUp.x - powerUpRadius <= paddle.x + paddle.width
     ) {
-      const speedBeforePowerUp = Math.hypot(ball.vx, ball.vy);
       const updated = applyPowerUp(powerUp, {
         paddle,
         ball,
@@ -614,20 +641,23 @@ function updatePowerUps() {
       shieldCharges = updated.shieldCharges ?? shieldCharges;
       spawnImpactFeedback(powerUp.x, powerUp.y - 10, powerUp.symbol, powerUp.color, true);
       if (powerUp.type === 'slow' || powerUp.type === 'gravity') {
-        const speedAfterPowerUp = Math.hypot(ball.vx, ball.vy);
-        const remainingPercent = Math.round((speedAfterPowerUp / Math.max(0.01, speedBeforePowerUp)) * 100);
-        const effectName = powerUp.type === 'slow' ? 'SKILPADDEFART' : 'SVEVEFART';
-        statusEl.textContent = powerUp.type === 'slow'
-          ? 'Skilpadde: ballen er kraftig bremset.'
-          : 'Fjær: ballen svever merkbart saktere.';
-        spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, `${effectName} ${remainingPercent} %`, powerUp.color, false, 90);
+        speedEffect = powerUp.type === 'slow' ? 'turtle' : 'feather';
+        setStatus(powerUp.type === 'slow' ? 'turtleStatus' : 'featherStatus');
+        spawnImpactFeedback(
+          WIDTH / 2,
+          HEIGHT / 2,
+          t(powerUp.type === 'slow' ? 'slowed' : 'floating'),
+          powerUp.color,
+          false,
+          75
+        );
         playTone(powerUp.type === 'slow' ? 190 : 310, 0.18, 'sine');
       }
       if (powerUp.type === 'multi') {
         playTone(980, 0.08, 'triangle');
       }
       if (powerUp.type === 'bonus') {
-        spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, 'LYNENERGI!', '#fde047', false, 90);
+        spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lightningEnergy'), '#fde047', false, 90);
         shockwaves.push({ x: ball.x, y: ball.y, radius: 8, life: 42, maxLife: 42, color: '#fde047' });
         playTone(1240, 0.18, 'sawtooth');
       }
@@ -657,7 +687,7 @@ function launchBall() {
     ball.vy *= scale;
   }
   ballLaunched = true;
-  statusEl.textContent = '';
+  setStatus();
 }
 
 function updateBall() {
@@ -702,7 +732,7 @@ function updateBall() {
       pointerAim = null;
       ball.vx = 0;
       ball.vy = 0;
-      statusEl.textContent = 'Ballen er fanget. Sikt og klikk for å skyte.';
+      setStatus('caughtBall');
     }
   }
 
@@ -745,7 +775,7 @@ function updateBall() {
       spawnImpactFeedback(
         brick.x + brick.width / 2,
         brick.y,
-        destroyed ? `+${earnedScore}` : `SPREKK! +${earnedScore}`,
+        destroyed ? `+${earnedScore}` : t('crack', { score: earnedScore }),
         brick.color
       );
       if (lightningTimer > 0) {
@@ -763,9 +793,10 @@ function updateBall() {
       }
       if (usedFireball) {
         piercingHits -= 1;
-        statusEl.textContent = piercingHits > 0
-          ? `Ildball: ${piercingHits} gjennomtrengende treff igjen.`
-          : 'Ildball-effekten er brukt opp.';
+        setStatus(
+          piercingHits > 0 ? 'fireballRemaining' : 'fireballDone',
+          { hits: piercingHits }
+        );
       } else if (result.axis === 'x') {
         ball.vx = -ball.vx;
       } else {
@@ -773,9 +804,9 @@ function updateBall() {
       }
       playTone(destroyed ? 680 + combo * 20 : 360, destroyed ? 0.06 : 0.09, destroyed ? 'triangle' : 'square');
       if (!destroyed && !usedFireball) {
-        statusEl.textContent = `Forsterket kloss svekket – ${brick.health} treff igjen.`;
+        setStatus('reinforcedRemaining', { hits: brick.health });
       } else if (combo >= 3 && !usedFireball) {
-        statusEl.textContent = `Kombo x${Math.floor(combo / 3) + 1}!`;
+        setStatus('comboStatus', { multiplier: Math.floor(combo / 3) + 1 });
       }
       break;
     }
@@ -786,8 +817,8 @@ function updateBall() {
       shieldCharges -= 1;
       ball.y = HEIGHT - ball.radius;
       ball.vy = -Math.abs(ball.vy);
-      statusEl.textContent = 'Skjoldet reddet ballen!';
-      spawnImpactFeedback(ball.x, HEIGHT - 18, 'REDDET!', '#34d399', false, 75);
+      setStatus('shieldSaved');
+      spawnImpactFeedback(ball.x, HEIGHT - 18, t('saved'), '#34d399', false, 75);
       playTone(760, 0.12, 'triangle');
       return;
     }
@@ -799,9 +830,10 @@ function updateBall() {
       ball.y = paddle.y - 10;
       ball.vx = 0;
       ball.vy = 0;
+      speedEffect = null;
       powerUps.length = 0;
-      statusEl.textContent = `Du mistet et liv. ${lives} liv igjen.`;
-      spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, 'LIV MISTET', '#f43f5e', false, 120);
+      setStatus('lostLife', { lives });
+      spawnImpactFeedback(WIDTH / 2, HEIGHT / 2, t('lostLifeEffect'), '#f43f5e', false, 120);
       playTone(220, 0.12, 'sawtooth');
     } else {
       const enteredName = playerNameInput?.value?.trim();
@@ -822,11 +854,11 @@ function updateBall() {
         highScoreName = playerName;
         localStorage.setItem('neon-breakout-high-score', String(highScore));
         localStorage.setItem('neon-breakout-high-score-name', highScoreName);
-        statusEl.textContent = 'Ny rekord! Skriv navn og trykk Lagre navn.';
+        setStatus('newRecord');
       } else if (scoreWasAdded) {
-        statusEl.textContent = 'Du kom på poengtavlen! Skriv navn og trykk Lagre navn.';
+        setStatus('madeLeaderboard');
       } else {
-        statusEl.textContent = 'Du tapte. Start på nytt for å prøve igjen.';
+        setStatus('gameOver');
       }
       nameForm.hidden = !scoreWasAdded;
       if (scoreWasAdded) {
@@ -849,7 +881,8 @@ function updateBall() {
     ball.y = paddle.y - 10;
     ball.vx = 0;
     ball.vy = 0;
-    statusEl.textContent = `Nivå ${level} klart! Klikk på banen for å skyte ballen.`;
+    speedEffect = null;
+    setStatus('levelComplete', { level });
     playTone(940, 0.12, 'sine');
   }
 }
@@ -869,7 +902,15 @@ function draw() {
     ctx.save();
     ctx.fillStyle = combo >= 3 ? '#facc15' : '#7dd3fc';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(`KOMBO ${combo}`, 20, 28);
+    ctx.fillText(t('combo', { combo }), 20, 28);
+    ctx.restore();
+  }
+
+  if (speedEffect) {
+    ctx.save();
+    ctx.fillStyle = speedEffect === 'turtle' ? '#86efac' : '#fbbf24';
+    ctx.font = 'bold 12px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.fillText(t(speedEffect === 'turtle' ? 'speedTurtle' : 'speedFeather'), 20, 46);
     ctx.restore();
   }
 
@@ -878,7 +919,7 @@ function draw() {
     ctx.fillStyle = '#e879f9';
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(`DOBLE POENG ${Math.ceil(multiplierTimer / 60)}s`, WIDTH - 20, 28);
+    ctx.fillText(t('doublePoints', { seconds: Math.ceil(multiplierTimer / 60) }), WIDTH - 20, 28);
     ctx.restore();
   }
 
@@ -889,21 +930,31 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.shadowColor = '#a855f7';
     ctx.shadowBlur = 10;
-    ctx.fillText(`⚡ LYNENERGI +50 %  ${Math.ceil(lightningTimer / 60)}s`, WIDTH / 2, 48);
+    ctx.fillText(t('lightningHud', { seconds: Math.ceil(lightningTimer / 60) }), WIDTH / 2, 48);
+    ctx.restore();
+  }
+
+  if (shieldCharges > 0) {
+    ctx.save();
+    ctx.fillStyle = '#5eead4';
+    ctx.font = 'bold 17px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.shadowColor = '#34d399';
+    ctx.shadowBlur = 8;
+    ctx.fillText(`🛡️ ${shieldCharges}`, WIDTH - 20, 50);
     ctx.restore();
   }
 
   const activeEffects = [
     catchCharges > 0 ? `🧲 ${catchCharges}` : null,
-    piercingHits > 0 ? `🔥 ${piercingHits}` : null,
-    shieldCharges > 0 ? `🛡️ ${shieldCharges}` : null
+    piercingHits > 0 ? `🔥 ${piercingHits}` : null
   ].filter(Boolean);
   if (activeEffects.length > 0) {
     ctx.save();
     ctx.fillStyle = '#5eead4';
-    ctx.font = 'bold 11px sans-serif';
+    ctx.font = 'bold 13px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(activeEffects.join(' · '), WIDTH - 20, 46);
+    ctx.fillText(activeEffects.join(' · '), WIDTH - 20, 70);
     ctx.restore();
   }
 
@@ -978,11 +1029,17 @@ menuDialog?.addEventListener('close', () => {
   gamePaused = false;
 });
 difficultySelect.value = settings.difficulty;
+languageSelect.value = settings.language;
 soundToggle.checked = settings.sound;
 effectsToggle.checked = settings.effects;
 difficultySelect?.addEventListener('change', () => {
   settings.difficulty = difficultySelect.value;
   saveSettings();
+});
+languageSelect?.addEventListener('change', () => {
+  settings.language = languageSelect.value;
+  saveSettings();
+  applyTranslations();
 });
 soundToggle?.addEventListener('change', () => {
   settings.sound = soundToggle.checked;
@@ -1020,11 +1077,12 @@ const syncPlayerName = () => {
 nameForm?.addEventListener('submit', (event) => {
   event.preventDefault();
   syncPlayerName();
-  statusEl.textContent = '';
+  setStatus();
 });
 
+applyTranslations();
 createBricks();
 updateHud();
-statusEl.textContent = '';
+setStatus('ready');
 draw();
 animationFrameId = requestAnimationFrame(loop);

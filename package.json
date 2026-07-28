@@ -1,6 +1,6 @@
 {
   "name": "neon-breakout",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "license": "UNLICENSED",
   "homepage": "https://github.com/Yeloby/neon-breakout",
@@ -38,6 +38,7 @@
     "files": [
       "index.html",
       "main.js",
+      "translations.js",
       "breakoutGameLogic.js",
       "electron-main.js",
       "package.json"

@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.log
 .DS_Store
+artwork/neon-breakout-social-preview-v*.jpg
+artwork/neon-breakout-social-preview-v*.png
