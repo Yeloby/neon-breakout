@@ -37,19 +37,19 @@
     <binary>neon-breakout</binary>
   </provides>
   <releases>
-    <release version="1.5.3" date="2026-07-28">
+    <release version="1.5.3" timestamp="1785232373">
       <description>
         <p>Adds Windows packaging, Microsoft Store integration and refreshed store artwork.</p>
         <p xml:lang="no">Legger til Windows-pakker, Microsoft Store-integrasjon og oppdatert butikkgrafikk.</p>
       </description>
     </release>
-    <release version="1.5.2" date="2026-07-28">
+    <release version="1.5.2" timestamp="1785221964">
       <description>
         <p>Simplifies playfield messaging, keeps power-up information clear and gives bricks a sharper box-art finish.</p>
         <p xml:lang="no">Forenkler informasjonen på spillbrettet, holder boosterstatus tydelig og gir klossene et skarpere boxart-uttrykk.</p>
       </description>
     </release>
-    <release version="1.5.1" date="2026-07-28">
+    <release version="1.5.1" timestamp="1785216905">
       <description>
         <p>Adds responsive fullscreen play, gamepad support, a refined interface and GNU GPLv3 licensing.</p>
         <p xml:lang="no">Legger til responsiv fullskjerm, gamepadstøtte, forbedret grensesnitt og GNU GPLv3-lisens.</p>
