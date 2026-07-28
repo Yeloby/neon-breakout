@@ -9,6 +9,12 @@ on:
       - "v*"
   pull_request:
   workflow_dispatch:
+    inputs:
+      publish_repository:
+        description: "Publiser det signerte APT- og Flatpak-arkivet"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -83,7 +89,9 @@ jobs:
           fi
 
   publish-apt:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish_repository)
     needs: build
     runs-on: ubuntu-24.04
     environment:
@@ -98,7 +106,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: neon-breakout-linux-${{ github.sha }}
-          path: dist
+          path: .
 
       - name: Installer arkivverktøy
         run: sudo apt-get update && sudo apt-get install -y apt-utils dpkg-dev flatpak gnupg

@@ -1,146 +1,97 @@
 # Neon Breakout
 
-![Håndmalt retro-cover med tredimensjonale emoji-boostere](artwork/neon-breakout-social-preview-1.4.4.jpg)
+![Neon Breakout – håndtegnet retro-boxart](artwork/neon-breakout-social-preview-1.4.4.jpg)
 
-Neon Breakout er et fargerikt, moderne Breakout-spill for Linux. Spillet er
-bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
-Det er et Yeloby-spill: avslappende spill for alle, med et gjenkjennelig univers
-av neon, håndtegnet retroestetikk og kreativ bruk av emojier.
+Et fargerikt Breakout-spill for Linux, utviklet av **Yeloby**. Neon Breakout
+kombinerer klassisk arkadespill med neonfarger, emoji-boostere, varierte brett
+og en avslappende retroestetikk.
 
-[Last ned nyeste Linux-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest)
+[**Last ned nyeste versjon**](https://github.com/Yeloby/neon-breakout/releases/latest)
 
-## Funksjoner
+## Om spillet
 
-- Tre vanskelighetsgrader med ulik ballfart og poengskalering
-- Umiddelbart språkvalg mellom norsk og engelsk
-- Boxart-basert startskjerm og gjennomgående Yeloby-profil
-- Tolv varierte blokkformasjoner med ulik størrelse og tetthet
-- Forsterkede klosser med flere helsepunkt og synlig sprekkdannelse
-- Tre startliv og sjeldne ekstraliv
-- Fjorten boostere med multiball, trinnvis padelbredde og tydelige effektforklaringer
-- Lynenergi med elektriske buer, bonuspoeng, elektrisk ballspor og nedtelling
-- Åtte skiftende, prosedyregenererte rombakgrunner uten tunge bildefiler
-- Komboer, poengeffekter og nivåfeiring
-- Lokal topp 10-liste med spillernavn og vanskelighetsgrad
-- Innstillinger for lyd og visuelle effekter
-- Responsivt grensesnitt
-- Tastatur-, mus- og pekerstyring
+- Norsk og engelsk språk
+- Tre vanskelighetsgrader med egen fart og poengberegning
+- Varierte blokkformasjoner og forsterkede klosser
+- Fjorten boostere, blant annet multiball, ildball og elektrisk ball
+- Skiftende rombakgrunner, komboer og lokale topplister
+- Støtte for tastatur, mus og berøringsflate
 
-## Krav for utvikling
+## Installering
 
-- Linux
-- Node.js 22.12 eller nyere
-- npm
+Alle offisielle pakker finnes under
+[nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
 
-## Kjør lokalt
+### Ubuntu, Debian, Linux Mint og Pop!_OS
 
-Installer avhengighetene:
+Last ned `.deb`-filen og installer den fra nedlastingsmappen:
+
+```bash
+sudo apt install ./neon-breakout_*_amd64.deb
+```
+
+### Fedora, openSUSE og andre RPM-baserte systemer
+
+Last ned `.rpm`-filen. På Fedora:
+
+```bash
+sudo dnf install ./neon-breakout-*.x86_64.rpm
+```
+
+På openSUSE:
+
+```bash
+sudo zypper install ./neon-breakout-*.x86_64.rpm
+```
+
+### Arch Linux og Arch-baserte systemer
+
+Last ned `.flatpak`-filen og installer den:
+
+```bash
+flatpak install ./Neon-Breakout-*.flatpak
+```
+
+Flatpak kan installeres på Arch med `sudo pacman -S flatpak` dersom det ikke
+allerede finnes på systemet.
+
+### AppImage
+
+AppImage krever ingen systeminstallasjon og fungerer på de fleste
+Linux-distribusjoner:
+
+```bash
+chmod +x Neon.Breakout-*.AppImage
+./Neon.Breakout-*.AppImage
+```
+
+## Oppdatering
+
+Se [nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest)
+og installer pakken for distribusjonen din på nytt. Innstillinger, spillernavn
+og lokale poengsummer beholdes ved en vanlig oppdatering.
+
+Automatiske oppdateringer gjennom `apt`, Flatpak og andre pakkekilder er
+planlagt, men de offisielle Yeloby-kildene er ikke publisert ennå. Inntil de er
+klare, er GitHub Releases den sikre og offisielle oppdateringskanalen.
+
+## Utvikling
+
+Krever Linux, Node.js 22.12 eller nyere og npm.
 
 ```bash
 npm install
-```
-
-Start spillet:
-
-```bash
+npm test
 npm start
 ```
 
-## Tester
-
-```bash
-npm test
-```
-
-Testene dekker blant annet kollisjoner, boostere, nivåoppsett og poengtavlen.
-
-## Bygg Linux-pakker
+Bygg installasjonspakker lokalt med:
 
 ```bash
 npm run build:linux
 ```
 
-Ferdige filer legges i `dist/`:
+## Lisens og opphav
 
-- `.AppImage` for bred Linux-kompatibilitet
-- `.deb` for Debian-baserte distribusjoner
-- `.rpm` for RPM-baserte distribusjoner
-- `.flatpak` for distribusjoner med Flatpak
-- Snap-oppskrift, AUR-oppskrift og COPR-spec for flere distribusjonskanaler
-- `.tar.gz` som portabel utgave
-
-### AppImage
-
-```bash
-chmod +x "dist/Neon Breakout-1.4.4.AppImage"
-./dist/Neon\ Breakout-1.4.4.AppImage
-```
-
-### Debian-pakke
-
-Den anbefalte installasjonen bruker det signerte Yeloby-arkivet:
-
-```bash
-curl -fLO https://yeloby.github.io/neon-breakout/apt/yeloby-archive-keyring.deb
-sudo apt install ./yeloby-archive-keyring.deb
-sudo apt update
-sudo apt install neon-breakout
-```
-
-Deretter kommer nye versjoner gjennom vanlig `sudo apt update` og
-`sudo apt upgrade`. En enkeltstående `.deb` kan fortsatt lastes ned fra GitHub
-Releases og installeres med `sudo apt install ./pakkenavn.deb`.
-
-### RPM-pakke
-
-```bash
-sudo dnf install ./dist/neon-breakout-1.4.4.x86_64.rpm
-```
-
-### Flatpak
-
-Dette er den anbefalte installasjonen for Arch Linux, Fedora, openSUSE og andre
-distribusjoner. Legg til Yeloby-kilden én gang:
-
-```bash
-flatpak remote-add --if-not-exists yeloby \
-  https://yeloby.github.io/neon-breakout/flatpak/yeloby.flatpakrepo
-flatpak install yeloby io.github.Yeloby.NeonBreakout
-```
-
-Nye versjoner installeres med vanlig `flatpak update`. På Arch Linux kan
-Flatpak installeres først med `sudo pacman -S flatpak`. Den enkeltstående
-`.flatpak`-filen er fortsatt tilgjengelig i GitHub Releases.
-
-### Portabel utgave
-
-```bash
-tar -xzf dist/neon-breakout-1.4.4.tar.gz
-./neon-breakout-1.4.4/neon-breakout
-```
-
-## Utgivelser
-
-GitHub Actions kjører tester og bygger alle Linux-formatene ved push og pull
-request. En versjonstag som `v1.4.4` oppretter automatisk en GitHub Release med
-installasjonspakkene som nedlastbare filer.
-
-Genererte pakker og `node_modules` er utelatt fra Git-historikken via
-`.gitignore`.
-
-Detaljer for vedlikeholdere finnes i
-[`docs/store-distribution.md`](docs/store-distribution.md),
-[`docs/apt-repository.md`](docs/apt-repository.md) og
-[`docs/flatpak-repository.md`](docs/flatpak-repository.md).
-
-## Prosjektstruktur
-
-- `main.js` – spilltilstand, rendering og brukergrensesnitt
-- `breakoutGameLogic.js` – testbar spillogikk
-- `electron-main.js` – Electron-vindu og sikkerhetsinnstillinger
-- `index.html` – struktur og stil
-- `tests/` – automatiserte tester
-
-## Opphav
-
-Utviklet av Johan Slåttavik. © 2026 Johan Slåttavik.
+Utviklet av Johan Slåttavik under merkenavnet Yeloby.
+© 2026 Johan Slåttavik. Alle rettigheter forbeholdt.
