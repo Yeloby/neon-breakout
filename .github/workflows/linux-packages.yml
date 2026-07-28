@@ -51,7 +51,7 @@ jobs:
         run: sudo snap install snapcraft --classic
 
       - name: Bygg Snap-pakke
-        run: snapcraft pack --destructive-mode
+        run: sudo snapcraft pack --destructive-mode
 
       - name: Installer Flatpak-verktøy
         run: |
