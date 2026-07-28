@@ -53,5 +53,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          for attempt in {1..40}; do
+            if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+              break
+            fi
+            if [ "${attempt}" -eq 40 ]; then
+              echo "::error::GitHub Release ${GITHUB_REF_NAME} ble ikke opprettet innen ti minutter."
+              exit 1
+            fi
+            echo "Venter på at Linux-jobben oppretter ${GITHUB_REF_NAME} (${attempt}/40) …"
+            sleep 15
+          done
           gh release upload "${GITHUB_REF_NAME}" dist/*.exe --clobber
           gh release upload "${GITHUB_REF_NAME}" dist/*.appx --clobber
