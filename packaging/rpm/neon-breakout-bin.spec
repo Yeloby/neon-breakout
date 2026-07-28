@@ -1,5 +1,5 @@
 Name:           neon-breakout
-Version:        1.4.4
+Version:        1.4.5
 Release:        1%{?dist}
 Summary:        A colorful and relaxing Breakout game by Yeloby
 License:        LicenseRef-Proprietary
@@ -37,6 +37,9 @@ install -Dm644 %{SOURCE2} %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/io
 %{_datadir}/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg
 
 %changelog
+* Tue Jul 28 2026 Johan Slåttavik - 1.4.5-1
+- Refresh branded artwork and streamline the in-game About panel.
+
 * Tue Jul 28 2026 Johan Slåttavik - 1.4.4-1
 - Updated box art and in-game logo
 * Tue Jul 28 2026 Johan Slåttavik - 1.4.3-1

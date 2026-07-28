@@ -66,7 +66,7 @@
         display: block;
         height: auto;
         object-fit: contain;
-        filter: drop-shadow(0 3px 7px rgba(236, 72, 153, 0.38));
+        background: transparent;
       }
       .start-brand {
         width: clamp(110px, 18vw, 150px);
@@ -352,9 +352,9 @@
   </head>
   <body>
     <section id="startScreen" class="start-screen" aria-label="Neon Breakout">
-      <img class="start-cover" src="./artwork/neon-breakout-social-preview-1.4.4.jpg" alt="" />
+      <img class="start-cover" src="./artwork/neon-breakout-social-preview-1.4.5.jpg" alt="" />
       <div class="start-content">
-        <img class="yeloby-logo start-brand" src="./artwork/yeloby-logo-1.4.4.png" alt="Yeloby" />
+        <img class="yeloby-logo start-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <form id="startForm" class="start-form">
           <label for="startPlayerName" data-i18n="playerName">Spillernavn</label>
           <input id="startPlayerName" type="text" maxlength="12" data-i18n-placeholder="playerNamePlaceholder" />
@@ -364,8 +364,8 @@
     </section>
     <div id="gameShell" class="game-shell" hidden>
       <div class="title-row">
-        <img class="game-logo" src="./artwork/neon-breakout-logo-1.4.4.png" alt="Neon Breakout" />
-        <img class="yeloby-logo title-brand" src="./artwork/yeloby-logo-1.4.4.png" alt="Yeloby" />
+        <img class="game-logo" src="./artwork/neon-breakout-logo-1.4.5.png" alt="Neon Breakout" />
+        <img class="yeloby-logo title-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <button id="menuButton" type="button" data-i18n="menu">Meny</button>
       </div>
       <canvas id="game" width="480" height="640"></canvas>
@@ -457,11 +457,9 @@
       </section>
       <section id="aboutPanel" class="menu-section menu-panel">
         <h3><span data-i18n="about">Om</span> Neon Breakout</h3>
-        <img class="yeloby-logo about-brand" src="./artwork/yeloby-logo-1.4.4.png" alt="Yeloby" />
+        <img class="yeloby-logo about-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <p data-i18n="brandPromise">Avslappende spill for alle, med neon, fantasi og emoji-magi.</p>
-        <p data-i18n="version">Versjon 1.4.4</p>
-        <p data-i18n="reinforcedInfo">Fra nivå 3 kan forsterkede klosser kreve flere treff. Sprekker, svakere glød og mørkere overflate viser skaden.</p>
-        <p data-i18n="builtWith">Linux-spill bygget med Electron 43</p>
+        <p data-i18n="version">Versjon 1.4.5</p>
         <p data-i18n="developer">Utvikler og © 2026: Johan Slåttavik</p>
       </section>
     </dialog>

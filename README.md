@@ -1,6 +1,6 @@
 # Neon Breakout
 
-![Neon Breakout – håndtegnet retro-boxart](artwork/neon-breakout-social-preview-1.4.4.jpg)
+![Neon Breakout – håndtegnet retro-boxart](artwork/neon-breakout-social-preview-1.4.5.jpg)
 
 Et fargerikt Breakout-spill for Linux, utviklet av **Yeloby**. Neon Breakout
 kombinerer klassisk arkadespill med neonfarger, emoji-boostere, varierte brett
