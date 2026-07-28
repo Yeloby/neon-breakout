@@ -431,6 +431,47 @@ function drawBall() {
   ctx.restore();
 }
 
+function drawLightningEffect() {
+  if (!settings.effects || lightningTimer <= 0) return;
+
+  const time = performance.now() * 0.012;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+
+  for (let arcIndex = 0; arcIndex < 4; arcIndex += 1) {
+    const angle = time * 0.35 + arcIndex * (Math.PI / 2);
+    const radius = 19 + Math.sin(time + arcIndex) * 5;
+    const endX = ball.x + Math.cos(angle) * radius;
+    const endY = ball.y + Math.sin(angle) * radius;
+    const perpendicularX = -Math.sin(angle);
+    const perpendicularY = Math.cos(angle);
+
+    ctx.beginPath();
+    ctx.moveTo(ball.x, ball.y);
+    for (let segment = 1; segment <= 4; segment += 1) {
+      const progress = segment / 4;
+      const jitter = Math.sin(time * 2.3 + arcIndex * 7 + segment * 5) * 4;
+      ctx.lineTo(
+        ball.x + (endX - ball.x) * progress + perpendicularX * jitter,
+        ball.y + (endY - ball.y) * progress + perpendicularY * jitter
+      );
+    }
+    ctx.strokeStyle = arcIndex % 2 === 0 ? 'rgba(253, 224, 71, 0.95)' : 'rgba(192, 132, 252, 0.9)';
+    ctx.lineWidth = arcIndex % 2 === 0 ? 1.8 : 1.2;
+    ctx.shadowColor = arcIndex % 2 === 0 ? '#fde047' : '#c084fc';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, 13 + Math.sin(time * 1.7) * 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawBricks() {
   bricks.forEach((brick) => {
     if (!brick.alive) return;
@@ -896,6 +937,7 @@ function draw() {
   drawPaddle();
   drawParticles();
   drawBall();
+  drawLightningEffect();
   drawImpactEffects();
 
   if (combo > 0) {
