@@ -9,7 +9,7 @@
     "url": "https://github.com/Yeloby/neon-breakout.git"
   },
   "desktopName": "neon-breakout.desktop",
-  "description": "Et fargerikt og moderne Breakout-spill for Linux",
+  "description": "Et fargerikt og moderne Breakout-spill for Windows og Linux",
   "author": {
     "name": "Johan Slåttavik"
   },
@@ -22,7 +22,9 @@
     "test": "node --test",
     "start": "electron .",
     "build:linux": "electron-builder --linux --publish never",
-    "build:dir": "electron-builder --linux dir"
+    "build:dir": "electron-builder --linux dir",
+    "build:windows": "electron-builder --win nsis portable --x64 --publish never",
+    "build:windows-store": "electron-builder --win appx --x64 --publish never"
   },
   "devDependencies": {
     "electron": "^43.2.0",
@@ -61,6 +63,39 @@
       "description": "Et fargerikt og moderne Breakout-spill for Linux.",
       "maintainer": "Johan Slåttavik",
       "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/windows/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Neon Breakout",
+      "deleteAppDataOnUninstall": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-${arch}-portable.${ext}"
+    },
+    "appx": {
+      "identityName": "Yeloby.NeonBreakout",
+      "publisher": "CN=565F9B38-B8EF-4913-A7FB-BBF42C29C4BF",
+      "applicationId": "NeonBreakout",
+      "displayName": "Neon Breakout",
+      "publisherDisplayName": "Yeloby",
+      "backgroundColor": "#020617",
+      "showNameOnTiles": true,
+      "languages": [
+        "en-US",
+        "nb-NO"
+      ]
     },
     "deb": {
       "packageCategory": "games"
