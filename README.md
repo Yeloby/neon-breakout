@@ -1,6 +1,6 @@
 # Neon Breakout
 
-![Håndmalt retro-cover for Neon Breakout](artwork/neon-breakout-social-preview.jpg)
+![Håndmalt retro-cover med spilltro neonklosser og emoji-boostere](artwork/neon-breakout-social-preview.jpg)
 
 Neon Breakout er et fargerikt, moderne Breakout-spill for Linux. Spillet er
 bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
