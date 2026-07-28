@@ -1,5 +1,5 @@
 Name:           neon-breakout
-Version:        1.5.1
+Version:        1.5.2
 Release:        1%{?dist}
 Summary:        A colorful and relaxing Breakout game by Yeloby
 License:        GPL-3.0-or-later
@@ -37,6 +37,9 @@ install -Dm644 %{SOURCE2} %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/io
 %{_datadir}/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg
 
 %changelog
+* Tue Jul 28 2026 Johan Slåttavik - 1.5.2-1
+- Simplify playfield messaging, keep the power-up HUD above the bricks and refine box-art brick styling.
+
 * Tue Jul 28 2026 Johan Slåttavik - 1.5.1-1
 - Add responsive fullscreen play, gamepad support, GPLv3 licensing, clearer speed text and refreshed app artwork.
 

@@ -141,11 +141,36 @@
         font-size: 1rem;
       }
       .canvas-wrap {
+        position: relative;
         min-width: 0;
         min-height: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      .game-over-restart {
+        position: absolute;
+        z-index: 2;
+        top: 63%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 168px;
+        padding: 10px 24px;
+        color: #071225;
+        background: linear-gradient(135deg, #facc15, #22d3ee 55%, #f472b6);
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        box-shadow:
+          0 0 22px rgba(34, 211, 238, 0.72),
+          0 0 34px rgba(244, 114, 182, 0.42);
+        animation: game-over-button-pulse 1.4s ease-in-out infinite alternate;
+      }
+      @keyframes game-over-button-pulse {
+        to {
+          transform: translate(-50%, -50%) scale(1.04);
+          box-shadow:
+            0 0 28px rgba(250, 204, 21, 0.78),
+            0 0 42px rgba(244, 114, 182, 0.55);
+        }
       }
       canvas {
         box-sizing: border-box;
@@ -476,6 +501,7 @@
       </div>
       <div class="canvas-wrap">
         <canvas id="game" width="480" height="640"></canvas>
+        <button id="gameOverRestartButton" class="game-over-restart" type="button" data-i18n="restart" hidden>Start på nytt</button>
       </div>
       <div class="hud">
         <div class="stat-card">
@@ -564,7 +590,7 @@
         <h3><span data-i18n="about">Om</span> Neon Breakout</h3>
         <img class="yeloby-logo about-brand" src="./artwork/yeloby-logo-1.4.5.png" alt="Yeloby" />
         <p data-i18n="brandPromise">Avslappende spill for alle, med neon, fantasi og emoji-magi.</p>
-        <p data-i18n="version">Versjon 1.5.1</p>
+        <p data-i18n="version">Versjon 1.5.2</p>
         <p data-i18n="freeSoftwareNotice">Fri programvare · GNU GPLv3+</p>
         <p data-i18n="developer">Utvikler og © 2026: Johan Slåttavik</p>
       </section>

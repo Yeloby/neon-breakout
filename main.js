@@ -11,6 +11,7 @@ const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
 const statusEl = document.getElementById('status');
 const restartButton = document.getElementById('restartButton');
+const gameOverRestartButton = document.getElementById('gameOverRestartButton');
 const fullscreenButton = document.getElementById('fullscreenButton');
 const highScoreEl = document.getElementById('highScore');
 const leaderboardEl = document.getElementById('leaderboard');
@@ -343,6 +344,7 @@ function resetGame() {
   level = 1;
   lives = 3;
   gameActive = true;
+  gameOverRestartButton.hidden = true;
   ballLaunched = false;
   pointerAim = null;
   combo = 0;
@@ -687,7 +689,7 @@ function drawBricks() {
     ctx.translate(shakeX, 0);
     if (settings.effects) {
       ctx.shadowColor = brick.color;
-      ctx.shadowBlur = Math.max(1, 4 - damage);
+      ctx.shadowBlur = Math.max(3, 8 - damage * 2);
     }
     if (brick.maxHealth > 1) {
       const armoredSurface = ctx.createLinearGradient(
@@ -707,18 +709,26 @@ function drawBricks() {
         brick.x,
         brick.y + brick.height
       );
-      neonSurface.addColorStop(0, '#ffffff');
-      neonSurface.addColorStop(0.13, brick.color);
-      neonSurface.addColorStop(0.72, brick.color);
-      neonSurface.addColorStop(1, '#071225');
+      neonSurface.addColorStop(0, brick.color);
+      neonSurface.addColorStop(0.58, brick.color);
+      neonSurface.addColorStop(0.82, `${brick.color}d8`);
+      neonSurface.addColorStop(1, '#050914');
       ctx.fillStyle = neonSurface;
     }
     ctx.beginPath();
-    ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
+    ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 7);
     ctx.fill();
     ctx.shadowBlur = 0;
-    ctx.strokeStyle = brick.maxHealth > 1 ? brick.color : 'rgba(235, 251, 255, 0.98)';
-    ctx.lineWidth = 1.7 + (brick.maxHealth - 1) * 0.65;
+    ctx.strokeStyle = brick.color;
+    ctx.lineWidth = 2.2 + (brick.maxHealth - 1) * 0.65;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.roundRect(brick.x + 2.2, brick.y + 2.2, brick.width - 4.4, brick.height - 4.4, 4.8);
+    ctx.strokeStyle = brick.maxHealth > 1
+      ? 'rgba(186,230,253,0.42)'
+      : 'rgba(248,253,255,0.72)';
+    ctx.lineWidth = 0.9;
     ctx.stroke();
 
     if (brick.maxHealth > 1) {
@@ -757,7 +767,7 @@ function drawBricks() {
       ctx.shadowBlur = 0;
       ctx.fillStyle = `rgba(2, 6, 23, ${0.22 + damageRatio * 0.28})`;
       ctx.beginPath();
-      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
+      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 7);
       ctx.fill();
       ctx.strokeStyle = brick.maxHealth > 1
         ? `rgba(224, 242, 254, ${0.78 + damageRatio * 0.2})`
@@ -784,7 +794,7 @@ function drawBricks() {
     if (brick.hitFlash > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${brick.hitFlash / 14})`;
       ctx.beginPath();
-      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
+      ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 7);
       ctx.fill();
       brick.hitFlash -= 1;
     }
@@ -809,33 +819,33 @@ function drawBrickBoxArtTexture(brick) {
     brick.x + brick.width,
     brick.y + brick.height
   );
-  paintedLight.addColorStop(0, 'rgba(255,255,255,0.52)');
-  paintedLight.addColorStop(0.2, 'rgba(255,255,255,0.12)');
+  paintedLight.addColorStop(0, 'rgba(255,255,255,0.34)');
+  paintedLight.addColorStop(0.18, 'rgba(255,255,255,0.09)');
   paintedLight.addColorStop(0.64, 'rgba(255,255,255,0)');
-  paintedLight.addColorStop(1, 'rgba(2,6,23,0.42)');
+  paintedLight.addColorStop(1, 'rgba(2,6,23,0.5)');
   ctx.fillStyle = paintedLight;
   ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
 
   ctx.lineCap = 'round';
-  for (let strokeIndex = 0; strokeIndex < 9; strokeIndex += 1) {
+  for (let strokeIndex = 0; strokeIndex < 5; strokeIndex += 1) {
     const startX = brick.x + 4 + seededBrickValue(brick.crackSeed, strokeIndex * 4) * (brick.width - 12);
     const startY = brick.y + 3 + seededBrickValue(brick.crackSeed, strokeIndex * 4 + 1) * (brick.height - 7);
     const length = 5 + seededBrickValue(brick.crackSeed, strokeIndex * 4 + 2) * 13;
     const slope = (seededBrickValue(brick.crackSeed, strokeIndex * 4 + 3) - 0.5) * 3.5;
     ctx.strokeStyle = strokeIndex % 3 === 0
-      ? 'rgba(255,255,255,0.28)'
+      ? 'rgba(255,255,255,0.2)'
       : strokeIndex % 3 === 1
-        ? 'rgba(2,6,23,0.18)'
-        : 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = 0.65 + seededBrickValue(brick.crackSeed, strokeIndex + 40) * 0.75;
+        ? 'rgba(2,6,23,0.24)'
+        : 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 0.55 + seededBrickValue(brick.crackSeed, strokeIndex + 40) * 0.45;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(Math.min(brick.x + brick.width - 3, startX + length), startY + slope);
     ctx.stroke();
   }
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.72)';
-  ctx.lineWidth = 1.25;
+  ctx.strokeStyle = 'rgba(255,255,255,0.58)';
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(brick.x + 7, brick.y + 4);
   ctx.lineTo(brick.x + brick.width - 9, brick.y + 4);
@@ -850,8 +860,12 @@ function drawBrickBoxArtTexture(brick) {
   ctx.restore();
 
   ctx.save();
-  ctx.strokeStyle = brick.maxHealth > 1 ? 'rgba(186,230,253,0.34)' : `${brick.color}cc`;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = brick.maxHealth > 1 ? 'rgba(186,230,253,0.48)' : brick.color;
+  ctx.lineWidth = brick.maxHealth > 1 ? 1.15 : 1.45;
+  if (settings.effects) {
+    ctx.shadowColor = brick.color;
+    ctx.shadowBlur = brick.maxHealth > 1 ? 5 : 9;
+  }
   ctx.beginPath();
   ctx.roundRect(brick.x + 3.5, brick.y + 3.5, brick.width - 7, brick.height - 7, 3.5);
   ctx.stroke();
@@ -942,8 +956,7 @@ function drawGameOverScreen() {
   const decorations = [
     { symbol: '✨', x: panelX + 34, y: panelY + 42 },
     { symbol: '💥', x: panelX + panelWidth - 38, y: panelY + 50 },
-    { symbol: '🫧', x: panelX + 42, y: panelY + panelHeight - 32 },
-    { symbol: '🎮', x: panelX + panelWidth - 42, y: panelY + panelHeight - 34 }
+    { symbol: '🫧', x: panelX + 42, y: panelY + panelHeight - 32 }
   ];
   ctx.font = '24px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
   ctx.textAlign = 'center';
@@ -955,6 +968,7 @@ function drawGameOverScreen() {
     ctx.fillText(symbol, 0, 0);
     ctx.restore();
   });
+  drawGamepadDecoration(panelX + panelWidth - 44, panelY + panelHeight - 35, time);
 
   const titleGradient = ctx.createLinearGradient(panelX + 80, 0, panelX + panelWidth - 80, 0);
   titleGradient.addColorStop(0, '#22d3ee');
@@ -974,9 +988,53 @@ function drawGameOverScreen() {
   ctx.font = 'bold 15px sans-serif';
   ctx.fillText(t('gameOverLevel', { level }), WIDTH / 2, panelY + 142);
 
-  ctx.fillStyle = '#fbcfe8';
-  ctx.font = 'bold 13px sans-serif';
-  ctx.fillText(t('gameOverPrompt'), WIDTH / 2, panelY + 188);
+  ctx.restore();
+}
+
+function drawGamepadDecoration(x, y, time) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(Math.sin(time + 3) * 0.08);
+  ctx.strokeStyle = '#7dd3fc';
+  ctx.fillStyle = 'rgba(8, 47, 73, 0.9)';
+  ctx.lineWidth = 1.8;
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = '#22d3ee';
+  ctx.shadowBlur = 6;
+
+  ctx.beginPath();
+  ctx.moveTo(-15, 2);
+  ctx.quadraticCurveTo(-13, -10, -6, -10);
+  ctx.lineTo(6, -10);
+  ctx.quadraticCurveTo(13, -10, 15, 2);
+  ctx.lineTo(12, 10);
+  ctx.quadraticCurveTo(10, 13, 7, 9);
+  ctx.lineTo(4, 5);
+  ctx.lineTo(-4, 5);
+  ctx.lineTo(-7, 9);
+  ctx.quadraticCurveTo(-10, 13, -12, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-8, -4);
+  ctx.lineTo(-8, 3);
+  ctx.moveTo(-11.5, -0.5);
+  ctx.lineTo(-4.5, -0.5);
+  ctx.stroke();
+
+  ctx.fillStyle = '#facc15';
+  ctx.beginPath();
+  ctx.arc(7, -3, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#f472b6';
+  ctx.beginPath();
+  ctx.arc(10.5, 1, 1.8, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -1151,8 +1209,8 @@ function updatePowerUps() {
       const boosterHudKey = `boosterHud${powerUp.type[0].toUpperCase()}${powerUp.type.slice(1)}`;
       boosterHudMessages = [
         ...boosterHudMessages.filter((message) => message.key !== boosterHudKey),
-        { key: boosterHudKey, timer: 360 }
-      ].slice(-2);
+        { key: boosterHudKey, timer: 600 }
+      ].slice(-3);
       boosterCelebration = {
         type: powerUp.type,
         symbol: powerUp.symbol,
@@ -1424,6 +1482,7 @@ function updateBall() {
       }
       setStatus();
       gameActive = false;
+      gameOverRestartButton.hidden = false;
     }
     return;
   }
@@ -1507,8 +1566,7 @@ function drawTopInformation() {
       : null,
     shieldCharges > 0
       ? {
-          kind: 'shield',
-          count: shieldCharges,
+          text: `🛡️ × ${shieldCharges}`,
           color: '#5eead4'
         }
       : null,
@@ -1527,99 +1585,52 @@ function drawTopInformation() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  let startY = 10;
-  const readableStatusKeys = new Set(['caughtBall', 'lostLife', 'levelComplete', 'shieldSaved']);
-  const bannerMessages = boosterHudMessages.length > 0
-    ? boosterHudMessages.map((message) => t(message.key))
-    : readableStatusKeys.has(currentStatus.key)
-      ? [t(currentStatus.key, currentStatus.values)]
-      : [];
-  if (bannerMessages.length > 0) {
-    const bannerGap = 6;
-    const bannerY = 8;
-    const bannerWidth = (WIDTH - 24 - bannerGap * (bannerMessages.length - 1)) / bannerMessages.length;
-    const bannerHeight = 24;
-    bannerMessages.forEach((bannerText, index) => {
-      const bannerX = 12 + index * (bannerWidth + bannerGap);
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-      ctx.strokeStyle = 'rgba(34, 211, 238, 0.72)';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.roundRect(bannerX, bannerY, bannerWidth, bannerHeight, 9);
-      ctx.fill();
-      ctx.stroke();
-      drawFittedHudText(
-        bannerText,
-        bannerX + bannerWidth / 2,
-        bannerY + bannerHeight / 2,
-        bannerWidth - 14,
-        bannerMessages.length > 1 ? 12 : 14,
-        '#f8fafc'
-      );
-    });
-    startY = 38;
-  }
-
-  const gap = 6;
-  const chipWidth = (WIDTH - 24 - gap) / 2;
-  const chipHeight = 22;
-  statuses.forEach((status, index) => {
-    const column = index % 2;
-    const row = Math.floor(index / 2);
-    const x = 12 + column * (chipWidth + gap);
-    const y = startY + row * (chipHeight + 4);
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
-    ctx.strokeStyle = `${status.color}99`;
-    ctx.lineWidth = 1;
+  if (boosterHudMessages.length > 0) {
+    const messageIndex = Math.floor(performance.now() / 2000) % boosterHudMessages.length;
+    const message = boosterHudMessages[messageIndex];
+    const position = boosterHudMessages.length > 1
+      ? `  ${messageIndex + 1}/${boosterHudMessages.length}`
+      : '';
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.75)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.roundRect(x, y, chipWidth, chipHeight, 8);
+    ctx.roundRect(12, 7, WIDTH - 24, 23, 9);
     ctx.fill();
     ctx.stroke();
-    if (status.kind === 'shield') {
-      drawShieldStatus(x + chipWidth / 2, y + chipHeight / 2, status.count, status.color);
-    } else {
-      drawFittedHudText(status.text, x + chipWidth / 2, y + chipHeight / 2, chipWidth - 12, 13, status.color);
-    }
-  });
+    drawFittedHudText(
+      `${t(message.key)}${position}`,
+      WIDTH / 2,
+      18.5,
+      WIDTH - 42,
+      13,
+      '#f8fafc',
+      10
+    );
+  }
+
+  if (statuses.length > 0) {
+    const statusText = statuses.map((status) => status.text).join('  ·  ');
+    const statusColor = statuses.length === 1 ? statuses[0].color : '#bff8ff';
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.8)';
+    ctx.strokeStyle = `${statusColor}99`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(12, 34, WIDTH - 24, 21, 8);
+    ctx.fill();
+    ctx.stroke();
+    drawFittedHudText(statusText, WIDTH / 2, 44.5, WIDTH - 38, 12, statusColor, 9);
+  }
   ctx.restore();
 }
 
-function drawShieldStatus(centerX, centerY, count, color) {
-  const iconX = centerX - 18;
-  const iconY = centerY - 8;
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.fillStyle = 'rgba(94, 234, 212, 0.2)';
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 5;
-  ctx.beginPath();
-  ctx.moveTo(iconX, iconY);
-  ctx.lineTo(iconX + 13, iconY + 3);
-  ctx.lineTo(iconX + 11, iconY + 11);
-  ctx.quadraticCurveTo(iconX + 7, iconY + 16, iconX, iconY + 18);
-  ctx.quadraticCurveTo(iconX - 7, iconY + 16, iconX - 11, iconY + 11);
-  ctx.lineTo(iconX - 13, iconY + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#f8fafc';
-  ctx.font = '900 16px "Segoe UI", Arial, sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(`× ${count}`, centerX + 3, centerY + 1);
-  ctx.restore();
-}
-
-function drawFittedHudText(text, x, y, maxWidth, preferredSize, color) {
+function drawFittedHudText(text, x, y, maxWidth, preferredSize, color, minimumSize = 11.5) {
   let fontSize = preferredSize;
   do {
     ctx.font = `bold ${fontSize}px "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     if (ctx.measureText(text).width <= maxWidth) break;
     fontSize -= 0.5;
-  } while (fontSize > 11.5);
+  } while (fontSize > minimumSize);
   ctx.fillStyle = color;
   ctx.shadowColor = color;
   ctx.shadowBlur = 5;
@@ -1692,6 +1703,7 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 
 restartButton.addEventListener('click', resetGame);
+gameOverRestartButton.addEventListener('click', resetGame);
 function startGame() {
   if (startScreen.hidden) return;
   startScreen.hidden = true;

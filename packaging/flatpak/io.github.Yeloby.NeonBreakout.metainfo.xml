@@ -36,6 +36,12 @@
     <binary>neon-breakout</binary>
   </provides>
   <releases>
+    <release version="1.5.2" date="2026-07-28">
+      <description>
+        <p>Simplifies playfield messaging, keeps power-up information clear and gives bricks a sharper box-art finish.</p>
+        <p xml:lang="no">Forenkler informasjonen på spillbrettet, holder boosterstatus tydelig og gir klossene et skarpere boxart-uttrykk.</p>
+      </description>
+    </release>
     <release version="1.5.1" date="2026-07-28">
       <description>
         <p>Adds responsive fullscreen play, gamepad support, a refined interface and GNU GPLv3 licensing.</p>
