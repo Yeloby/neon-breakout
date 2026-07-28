@@ -1,4 +1,4 @@
-import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
+import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, collideWithPaddle, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, pickWeightedPowerUp, resolveBrickCollision } from './breakoutGameLogic.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -259,6 +259,7 @@ function createBricks() {
   for (let row = 0; row < BRICK_ROWS; row += 1) {
     for (let col = 0; col < BRICK_COLS; col += 1) {
       if (!layout[row][col]) continue;
+      const health = getBrickHealth(level, row, col);
       bricks.push({
         x: startX + col * (BRICK_WIDTH + BRICK_GAP),
         y: startY + row * (BRICK_HEIGHT + BRICK_GAP),
@@ -266,7 +267,10 @@ function createBricks() {
         height: BRICK_HEIGHT,
         color: randomColor(),
         alive: true,
-        health: 1
+        health,
+        maxHealth: health,
+        hitFlash: 0,
+        hitCooldown: 0
       });
     }
   }
@@ -402,10 +406,14 @@ function drawBall() {
 function drawBricks() {
   bricks.forEach((brick) => {
     if (!brick.alive) return;
+    const damage = brick.maxHealth - brick.health;
+    const damageRatio = damage / Math.max(1, brick.maxHealth - 1);
+    const shakeX = brick.hitFlash > 0 ? Math.sin(brick.hitFlash * 2.4) * 1.5 : 0;
     ctx.save();
+    ctx.translate(shakeX, 0);
     if (settings.effects) {
       ctx.shadowColor = brick.color;
-      ctx.shadowBlur = 10 + Math.sin(performance.now() * 0.004 + brick.x) * 4;
+      ctx.shadowBlur = Math.max(2, 10 - damage * 3) + Math.sin(performance.now() * 0.004 + brick.x) * 2;
     }
     ctx.fillStyle = brick.color;
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
@@ -413,6 +421,33 @@ function drawBricks() {
     ctx.roundRect(brick.x, brick.y, brick.width, brick.height, 6);
     ctx.fill();
     ctx.stroke();
+
+    if (damage > 0) {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = `rgba(2, 6, 23, ${0.22 + damageRatio * 0.28})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(15, 23, 42, ${0.75 + damageRatio * 0.2})`;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(brick.x + brick.width * 0.18, brick.y + 2);
+      ctx.lineTo(brick.x + brick.width * 0.42, brick.y + brick.height * 0.48);
+      ctx.lineTo(brick.x + brick.width * 0.3, brick.y + brick.height - 2);
+      if (damage >= 2) {
+        ctx.moveTo(brick.x + brick.width * 0.72, brick.y + 1);
+        ctx.lineTo(brick.x + brick.width * 0.56, brick.y + brick.height * 0.52);
+        ctx.lineTo(brick.x + brick.width * 0.82, brick.y + brick.height - 2);
+        ctx.moveTo(brick.x + brick.width * 0.42, brick.y + brick.height * 0.48);
+        ctx.lineTo(brick.x + brick.width * 0.68, brick.y + brick.height * 0.35);
+      }
+      ctx.stroke();
+    }
+
+    if (brick.hitFlash > 0) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${brick.hitFlash / 14})`;
+      ctx.fill();
+      brick.hitFlash -= 1;
+    }
     ctx.restore();
   });
 }
@@ -673,23 +708,44 @@ function updateBall() {
 
   for (const brick of bricks) {
     if (!brick.alive) continue;
+    if (brick.hitCooldown > 0) {
+      brick.hitCooldown -= 1;
+      continue;
+    }
     const result = resolveBrickCollision(ball, brick);
     if (result.hit) {
+      const usedFireball = piercingHits > 0;
       combo += 1;
       comboTimer = 90;
+      const destroyed = result.destroyed;
       const earnedScore = calculateBrickScore({
         combo,
         scoreMultiplier,
         difficultyMultiplier: DIFFICULTIES[settings.difficulty].scoreMultiplier,
-        lightningActive: lightningTimer > 0
+        lightningActive: lightningTimer > 0,
+        baseScore: destroyed ? 10 : 4
       });
       score += earnedScore;
-      brick.alive = false;
-      spawnParticles(brick.x + brick.width / 2, brick.y + brick.height / 2, brick.color);
+      brick.health = result.brick.health;
+      brick.alive = result.brick.alive;
+      brick.hitFlash = 10;
+      brick.hitCooldown = usedFireball && !destroyed ? 12 : 0;
+      const particleCount = destroyed ? 14 : 6;
+      for (let particleIndex = 0; particleIndex < particleCount; particleIndex += 1) {
+        particles.push({
+          x: brick.x + brick.width / 2,
+          y: brick.y + brick.height / 2,
+          vx: (Math.random() - 0.5) * (destroyed ? 3.8 : 2.2),
+          vy: (Math.random() - 0.5) * (destroyed ? 3.8 : 2.2),
+          life: destroyed ? 30 : 18,
+          maxLife: destroyed ? 30 : 18,
+          color: brick.color
+        });
+      }
       spawnImpactFeedback(
         brick.x + brick.width / 2,
         brick.y,
-        `+${earnedScore}`,
+        destroyed ? `+${earnedScore}` : `SPREKK! +${earnedScore}`,
         brick.color
       );
       if (lightningTimer > 0) {
@@ -702,10 +758,9 @@ function updateBall() {
           color: '#fde047'
         });
       }
-      if (Math.random() < DIFFICULTIES[settings.difficulty].boosterChance) {
+      if (destroyed && Math.random() < DIFFICULTIES[settings.difficulty].boosterChance) {
         spawnPowerUp(brick.x + brick.width / 2, brick.y + brick.height / 2);
       }
-      const usedFireball = piercingHits > 0;
       if (usedFireball) {
         piercingHits -= 1;
         statusEl.textContent = piercingHits > 0
@@ -716,8 +771,12 @@ function updateBall() {
       } else {
         ball.vy = -ball.vy;
       }
-      playTone(680 + combo * 20, 0.06, 'triangle');
-      if (combo >= 3 && !usedFireball) statusEl.textContent = `Kombo x${Math.floor(combo / 3) + 1}!`;
+      playTone(destroyed ? 680 + combo * 20 : 360, destroyed ? 0.06 : 0.09, destroyed ? 'triangle' : 'square');
+      if (!destroyed && !usedFireball) {
+        statusEl.textContent = `Forsterket kloss svekket – ${brick.health} treff igjen.`;
+      } else if (combo >= 3 && !usedFireball) {
+        statusEl.textContent = `Kombo x${Math.floor(combo / 3) + 1}!`;
+      }
       break;
     }
   }

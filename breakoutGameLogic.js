@@ -66,10 +66,17 @@ export function resolveBrickCollision(ball, brick) {
     const overlapBottom = brickBottom - ballTop;
     const horizontalOverlap = Math.min(overlapLeft, overlapRight);
     const verticalOverlap = Math.min(overlapTop, overlapBottom);
-    const nextBrick = { ...brick, alive: false };
+    const currentHealth = Math.max(1, brick.health || 1);
+    const remainingHealth = currentHealth - 1;
+    const nextBrick = {
+      ...brick,
+      health: remainingHealth,
+      alive: remainingHealth > 0
+    };
     return {
       hit: true,
       brick: nextBrick,
+      destroyed: remainingHealth === 0,
       axis: horizontalOverlap < verticalOverlap ? 'x' : 'y'
     };
   }
@@ -133,6 +140,18 @@ export function getLevelLayout(level, cols, rows) {
   }
 
   return layout;
+}
+
+export function getBrickHealth(level, row, col) {
+  if (level < 3) return 1;
+
+  const roll = (level * 17 + row * 29 + col * 37) % 100;
+  const armoredChance = level >= 6 ? Math.min(24, 4 + (level - 6) * 2) : 0;
+  const reinforcedChance = Math.min(44, 14 + (level - 3) * 3);
+
+  if (roll < armoredChance) return 3;
+  if (roll < armoredChance + reinforcedChance) return 2;
+  return 1;
 }
 
 export function applyPowerUp(powerUp, state) {
@@ -219,11 +238,12 @@ export function calculateBrickScore({
   combo = 0,
   scoreMultiplier = 1,
   difficultyMultiplier = 1,
-  lightningActive = false
+  lightningActive = false,
+  baseScore = 10
 } = {}) {
   const comboMultiplier = 1 + Math.floor(combo / 3) * 0.5;
   const lightningMultiplier = lightningActive ? 1.5 : 1;
-  return Math.round(10 * comboMultiplier * scoreMultiplier * difficultyMultiplier * lightningMultiplier);
+  return Math.round(baseScore * comboMultiplier * scoreMultiplier * difficultyMultiplier * lightningMultiplier);
 }
 
 function scaleVelocity(velocity, factor, minimumMagnitude) {

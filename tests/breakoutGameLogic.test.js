@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getLevelLayout, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
+import { addLeaderboardEntry, bounceOffWalls, calculateBrickScore, collideWithPaddle, resolveBrickCollision, getBrickHealth, getLevelLayout, applyPowerUp, getLaunchVelocityFromPointer, pickWeightedPowerUp } from '../breakoutGameLogic.js';
 
 test('bounceOffWalls reverses horizontal velocity when the ball hits a vertical wall', () => {
   const ball = { x: 6, y: 40, radius: 6, vx: -4, vy: 2 };
@@ -46,6 +46,37 @@ test('resolveBrickCollision identifies a collision on the side of a brick', () =
   const brick = { x: 10, y: 10, width: 20, height: 20, health: 1 };
 
   assert.equal(resolveBrickCollision(ball, brick).axis, 'x');
+});
+
+test('reinforced bricks lose one health and remain active until the final hit', () => {
+  const ball = { x: 20, y: 20, radius: 6, vx: 2, vy: 3 };
+  const brick = { x: 10, y: 10, width: 20, height: 10, health: 3, maxHealth: 3 };
+
+  const firstHit = resolveBrickCollision(ball, brick);
+  const secondHit = resolveBrickCollision(ball, firstHit.brick);
+  const finalHit = resolveBrickCollision(ball, secondHit.brick);
+
+  assert.equal(firstHit.destroyed, false);
+  assert.equal(firstHit.brick.health, 2);
+  assert.equal(firstHit.brick.alive, true);
+  assert.equal(secondHit.brick.health, 1);
+  assert.equal(finalHit.destroyed, true);
+  assert.equal(finalHit.brick.health, 0);
+  assert.equal(finalHit.brick.alive, false);
+});
+
+test('reinforced and armored bricks are introduced gradually from level three', () => {
+  const earlyHealth = Array.from({ length: 5 }, (_, row) =>
+    Array.from({ length: 8 }, (_, col) => getBrickHealth(2, row, col))
+  ).flat();
+  const laterHealth = Array.from({ length: 5 }, (_, row) =>
+    Array.from({ length: 8 }, (_, col) => getBrickHealth(10, row, col))
+  ).flat();
+
+  assert.deepEqual(new Set(earlyHealth), new Set([1]));
+  assert.equal(laterHealth.some((health) => health === 2), true);
+  assert.equal(laterHealth.some((health) => health === 3), true);
+  assert.equal(laterHealth.every((health) => health >= 1 && health <= 3), true);
 });
 
 test('getLevelLayout creates a different pattern for later levels', () => {
@@ -254,6 +285,7 @@ test('brick scores scale with difficulty, combo, double points and lightning', (
     difficultyMultiplier: 1.4,
     lightningActive: true
   }), 63);
+  assert.equal(calculateBrickScore({ baseScore: 4, difficultyMultiplier: 1.4 }), 6);
 });
 
 test('catch and fireball powerups grant limited-use abilities', () => {

@@ -11,6 +11,7 @@ bygget med Electron og bruker Canvas for grafikk, animasjoner og spillfysikk.
 
 - Tre vanskelighetsgrader med ulik ballfart og poengskalering
 - Tolv varierte blokkformasjoner med ulik størrelse og tetthet
+- Forsterkede klosser med flere helsepunkt og synlig sprekkdannelse
 - Tre startliv og sjeldne ekstraliv
 - Tretten boostere med trinnvis padelbredde og tydelige fartseffekter
 - Lynenergi med bonuspoeng, elektrisk ballspor og nedtelling
@@ -65,8 +66,8 @@ Ferdige filer legges i `dist/`:
 ### AppImage
 
 ```bash
-chmod +x "dist/Neon Breakout-1.2.0.AppImage"
-./dist/Neon\ Breakout-1.2.0.AppImage
+chmod +x "dist/Neon Breakout-1.3.0.AppImage"
+./dist/Neon\ Breakout-1.3.0.AppImage
 ```
 
 ### Debian-pakke
@@ -75,7 +76,7 @@ Den nedlastede `.deb`-pakken installeres med APT, som også henter eventuelle
 systemavhengigheter:
 
 ```bash
-sudo apt install ./dist/neon-breakout_1.2.0_amd64.deb
+sudo apt install ./dist/neon-breakout_1.3.0_amd64.deb
 ```
 
 Et eget APT-arkiv er ikke nødvendig for denne enkeltpakken. Det unngår også at
@@ -84,7 +85,7 @@ brukeren må stole på en ekstra pakkekilde og signeringsnøkkel.
 ### RPM-pakke
 
 ```bash
-sudo dnf install ./dist/neon-breakout-1.2.0.x86_64.rpm
+sudo dnf install ./dist/neon-breakout-1.3.0.x86_64.rpm
 ```
 
 ### Flatpak
@@ -92,7 +93,7 @@ sudo dnf install ./dist/neon-breakout-1.2.0.x86_64.rpm
 Last ned `.flatpak`-filen fra GitHub-utgivelsen og installer den:
 
 ```bash
-flatpak install ./Neon-Breakout-1.2.0.flatpak
+flatpak install ./Neon-Breakout-1.3.0.flatpak
 flatpak run io.github.Yeloby.NeonBreakout
 ```
 
@@ -102,14 +103,14 @@ en separat innsending og godkjenning hos Flathub.
 ### Portabel utgave
 
 ```bash
-tar -xzf dist/neon-breakout-1.2.0.tar.gz
-./neon-breakout-1.2.0/neon-breakout
+tar -xzf dist/neon-breakout-1.3.0.tar.gz
+./neon-breakout-1.3.0/neon-breakout
 ```
 
 ## Utgivelser
 
 GitHub Actions kjører tester og bygger alle Linux-formatene ved push og pull
-request. En versjonstag som `v1.2.0` oppretter automatisk en GitHub Release med
+request. En versjonstag som `v1.3.0` oppretter automatisk en GitHub Release med
 installasjonspakkene som nedlastbare filer.
 
 Genererte pakker og `node_modules` er utelatt fra Git-historikken via
