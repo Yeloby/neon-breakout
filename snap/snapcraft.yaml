@@ -1,6 +1,6 @@
 name: neon-breakout
 base: core24
-version: '1.5.2'
+version: '1.5.3'
 summary: A colorful and relaxing Breakout game by Yeloby
 description: |
   Neon Breakout is a relaxing arcade game with neon visuals, creative emoji

@@ -36,6 +36,12 @@
     <binary>neon-breakout</binary>
   </provides>
   <releases>
+    <release version="1.5.3" date="2026-07-28">
+      <description>
+        <p>Adds Windows packaging, Microsoft Store integration and refreshed store artwork.</p>
+        <p xml:lang="no">Legger til Windows-pakker, Microsoft Store-integrasjon og oppdatert butikkgrafikk.</p>
+      </description>
+    </release>
     <release version="1.5.2" date="2026-07-28">
       <description>
         <p>Simplifies playfield messaging, keeps power-up information clear and gives bricks a sharper box-art finish.</p>
