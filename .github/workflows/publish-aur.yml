@@ -1,0 +1,48 @@
+name: Publiser AUR-pakke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - "packaging/aur/**"
+      - ".github/workflows/publish-aur.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Hent kildekoden
+        uses: actions/checkout@v4
+
+      - name: Klargjør AUR-nøkkel
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "${AUR_SSH_PRIVATE_KEY}" ]; then
+            echo "::error::AUR_SSH_PRIVATE_KEY mangler som GitHub Actions-secret."
+            exit 1
+          fi
+          install -d -m 700 "${HOME}/.ssh"
+          printf '%s\n' "${AUR_SSH_PRIVATE_KEY}" > "${HOME}/.ssh/id_ed25519"
+          chmod 600 "${HOME}/.ssh/id_ed25519"
+          ssh-keyscan -H aur.archlinux.org >> "${HOME}/.ssh/known_hosts"
+
+      - name: Publiser neon-breakout-bin
+        run: |
+          git clone ssh://aur@aur.archlinux.org/neon-breakout-bin.git aur-repo
+          cp packaging/aur/PKGBUILD packaging/aur/.SRCINFO aur-repo/
+          cd aur-repo
+          git config user.name "Yeloby"
+          git config user.email "yeloby@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then
+            echo "AUR-pakken er allerede oppdatert."
+            exit 0
+          fi
+          git commit -m "Update to 1.5.2"
+          git push origin master
