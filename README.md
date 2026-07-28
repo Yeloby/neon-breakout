@@ -24,10 +24,13 @@ Alle offisielle pakker finnes under
 
 ### Ubuntu, Debian, Linux Mint og Pop!_OS
 
-Last ned `.deb`-filen og installer den fra nedlastingsmappen:
+Legg til den signerte Yeloby-kilden og installer spillet:
 
 ```bash
-sudo apt install ./neon-breakout_*_amd64.deb
+curl -fLO https://yeloby.github.io/neon-breakout/apt/yeloby-archive-keyring.deb
+sudo apt install ./yeloby-archive-keyring.deb
+sudo apt update
+sudo apt install neon-breakout
 ```
 
 ### Fedora, openSUSE og andre RPM-baserte systemer
@@ -46,14 +49,14 @@ sudo zypper install ./neon-breakout-*.x86_64.rpm
 
 ### Arch Linux og Arch-baserte systemer
 
-Last ned `.flatpak`-filen og installer den:
+Installer Flatpak med `sudo pacman -S flatpak` dersom det ikke allerede finnes
+på systemet. Legg deretter til Yeloby-kilden og installer spillet:
 
 ```bash
-flatpak install ./Neon-Breakout-*.flatpak
+flatpak remote-add --if-not-exists yeloby \
+  https://yeloby.github.io/neon-breakout/flatpak/yeloby.flatpakrepo
+flatpak install yeloby io.github.Yeloby.NeonBreakout
 ```
-
-Flatpak kan installeres på Arch med `sudo pacman -S flatpak` dersom det ikke
-allerede finnes på systemet.
 
 ### AppImage
 
@@ -67,13 +70,23 @@ chmod +x Neon.Breakout-*.AppImage
 
 ## Oppdatering
 
-Se [nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest)
-og installer pakken for distribusjonen din på nytt. Innstillinger, spillernavn
-og lokale poengsummer beholdes ved en vanlig oppdatering.
+Installerte du spillet fra Yeloby-kilden på et Debian-basert system, kommer nye
+versjoner gjennom den vanlige systemoppdateringen:
 
-Automatiske oppdateringer gjennom `apt`, Flatpak og andre pakkekilder er
-planlagt, men de offisielle Yeloby-kildene er ikke publisert ennå. Inntil de er
-klare, er GitHub Releases den sikre og offisielle oppdateringskanalen.
+```bash
+sudo apt update
+sudo apt upgrade
+```
+
+Flatpak-utgaven oppdateres med:
+
+```bash
+flatpak update
+```
+
+AppImage og manuelt installerte RPM-pakker erstattes med pakken fra
+[nyeste GitHub-utgivelse](https://github.com/Yeloby/neon-breakout/releases/latest).
+Innstillinger, spillernavn og lokale poengsummer beholdes ved oppdatering.
 
 ## Utvikling
 
