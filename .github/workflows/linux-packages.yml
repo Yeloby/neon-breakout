@@ -129,7 +129,7 @@ jobs:
           path: .
 
       - name: Installer arkivverktøy
-        run: sudo apt-get update && sudo apt-get install -y apt-utils dpkg-dev flatpak gnupg
+        run: sudo apt-get update && sudo apt-get install -y apt-utils dpkg-dev flatpak gnupg ostree
 
       - name: Bygg signert Yeloby APT-arkiv
         env:
@@ -181,6 +181,12 @@ jobs:
 
           cd "${GITHUB_WORKSPACE}"
           cp -a flatpak-repo site/flatpak
+          FLATPAK_REF="app/io.github.Yeloby.NeonBreakout/x86_64/master"
+          FLATPAK_COMMIT="$(ostree --repo=site/flatpak rev-parse "${FLATPAK_REF}")"
+          ostree --repo=site/flatpak gpg-sign \
+            "${FLATPAK_COMMIT}" \
+            "${APT_SIGNING_KEY}" \
+            --gpg-homedir="${GNUPGHOME}"
           flatpak build-update-repo \
             --gpg-sign="${APT_SIGNING_KEY}" \
             --gpg-homedir="${GNUPGHOME}" \
