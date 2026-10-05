@@ -4,3 +4,11 @@ dist/
 .DS_Store
 artwork/neon-breakout-social-preview-v*.jpg
 artwork/neon-breakout-social-preview-v*.png
+
+# Local packaging outputs
+/*.snap
+/parts/
+/stage/
+/prime/
+/flatpak-build/
+/flatpak-repo/

@@ -1,17 +1,21 @@
 Name:           neon-breakout
-Version:        1.5.3
+Version:        1.5.4
 Release:        1%{?dist}
 Summary:        A colorful and relaxing Breakout game by Yeloby
 License:        GPL-3.0-or-later
 URL:            https://github.com/Yeloby/neon-breakout
 Source0:        %{url}/releases/download/v%{version}/neon-breakout-%{version}.tar.gz
 Source1:        %{url}/raw/v%{version}/packaging/flatpak/io.github.Yeloby.NeonBreakout.desktop
-Source2:        %{url}/raw/v%{version}/packaging/flatpak/io.github.Yeloby.NeonBreakout.svg
+Source2:        %{url}/raw/v%{version}/packaging/flatpak/io.github.Yeloby.NeonBreakout.png
 BuildArch:      x86_64
 
 Requires:       gtk3
 Requires:       nss
 Requires:       alsa-lib
+Requires:       libgbm.so.1()(64bit)
+Requires:       libxkbcommon.so.0()(64bit)
+Requires:       libudev.so.1()(64bit)
+Requires:       libcups.so.2()(64bit)
 
 %description
 Neon Breakout is a relaxing arcade game with neon visuals, creative emoji
@@ -28,15 +32,18 @@ cp -a . %{buildroot}/opt/neon-breakout/
 mkdir -p %{buildroot}%{_bindir}
 ln -s /opt/neon-breakout/neon-breakout %{buildroot}%{_bindir}/neon-breakout
 install -Dm644 %{SOURCE1} %{buildroot}%{_datadir}/applications/io.github.Yeloby.NeonBreakout.desktop
-install -Dm644 %{SOURCE2} %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg
+install -Dm644 %{SOURCE2} %{buildroot}%{_datadir}/icons/hicolor/512x512/apps/io.github.Yeloby.NeonBreakout.png
 
 %files
 /opt/neon-breakout
 %{_bindir}/neon-breakout
 %{_datadir}/applications/io.github.Yeloby.NeonBreakout.desktop
-%{_datadir}/icons/hicolor/scalable/apps/io.github.Yeloby.NeonBreakout.svg
+%{_datadir}/icons/hicolor/512x512/apps/io.github.Yeloby.NeonBreakout.png
 
 %changelog
+* Sun Oct 04 2026 Johan Slåttavik - 1.5.4-1
+- Fix strictly confined Snap startup on current Ubuntu and bundle canonical Linux emoji across platforms.
+
 * Tue Jul 28 2026 Johan Slåttavik - 1.5.3-1
 - Add Windows packaging, Microsoft Store assets and cross-platform release automation.
 

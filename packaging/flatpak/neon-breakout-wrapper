@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /app/lib/neon-breakout/neon-breakout --no-sandbox "$@"
+exec zypak-wrapper /app/lib/neon-breakout/neon-breakout "$@"

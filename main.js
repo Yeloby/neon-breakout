@@ -1,5 +1,9 @@
 import { addLeaderboardEntry, applyPowerUp, bounceOffWalls, calculateBrickScore, capBallVelocity, collideWithPaddle, getBrickCrackLines, getBrickHealth, getLaunchVelocityFromPointer, getLevelLayout, getMultiballVelocities, pickWeightedPowerUp, qualifiesForLeaderboard, resolveBrickCollision, setBallSpeed } from './breakoutGameLogic.js';
 import { getDefaultLanguage, translate } from './translations.js';
+import { loadEmojiFont, measureEmojiText, paintEmojiText, setEmojiText } from './emoji-rendering.js';
+
+document.querySelectorAll('[data-i18n]').forEach((element) => setEmojiText(element, element.textContent));
+await loadEmojiFont();
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -147,13 +151,13 @@ function saveSettings() {
 
 function setStatus(key = null, values = {}) {
   currentStatus = { key, values };
-  statusEl.textContent = key ? t(key, values) : '';
+  setEmojiText(statusEl, key ? t(key, values) : '');
 }
 
 function applyTranslations() {
   document.documentElement.lang = settings.language;
   document.querySelectorAll('[data-i18n]').forEach((element) => {
-    element.textContent = t(element.dataset.i18n);
+    setEmojiText(element, t(element.dataset.i18n));
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
     element.placeholder = t(element.dataset.i18nPlaceholder);
@@ -161,7 +165,7 @@ function applyTranslations() {
   document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
     element.setAttribute('aria-label', t(element.dataset.i18nAriaLabel));
   });
-  if (currentStatus.key) statusEl.textContent = t(currentStatus.key, currentStatus.values);
+  if (currentStatus.key) setEmojiText(statusEl, t(currentStatus.key, currentStatus.values));
   if (fullscreenButton) updateFullscreenButton();
   renderLeaderboard();
 }
@@ -501,7 +505,7 @@ function drawPaddle() {
     ctx.strokeStyle = arc === 0 ? 'rgba(248,250,252,0.9)' : 'rgba(232,121,249,0.65)';
     ctx.stroke();
   }
-  ctx.font = '15px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.font = '15px "Neon Breakout Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.shadowColor = '#e879f9';
@@ -644,7 +648,7 @@ function drawActivePowerUpEffects() {
     ctx.lineTo(centerX + Math.cos(angle) * outer, centerY + Math.sin(angle) * outer);
     ctx.stroke();
   }
-  ctx.font = '30px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.font = '30px "Neon Breakout Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(boosterCelebration.symbol, centerX, centerY - 28 - progress * 12);
@@ -883,7 +887,7 @@ function drawImpactEffects() {
     ctx.font = item.large
       ? 'bold 30px sans-serif'
       : item.emoji
-        ? '22px "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
+        ? '22px "Neon Breakout Emoji", sans-serif'
       : isScoreText
         ? 'bold 20px sans-serif'
         : 'bold 14px sans-serif';
@@ -930,7 +934,7 @@ function drawGameOverScreen() {
     { symbol: '💥', x: panelX + panelWidth - 38, y: panelY + 50 },
     { symbol: '🫧', x: panelX + 42, y: panelY + panelHeight - 32 }
   ];
-  ctx.font = '24px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.font = '24px "Neon Breakout Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   decorations.forEach(({ symbol, x, y }, index) => {
@@ -1047,7 +1051,7 @@ function drawPowerUps() {
     ctx.arc(-2, -3, POWER_UP_RADIUS - 4, Math.PI * 1.08, Math.PI * 1.76);
     ctx.stroke();
     ctx.fillStyle = '#fff';
-    ctx.font = '29px "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.font = '29px "Neon Breakout Emoji", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(powerUp.symbol, 0, 0);
@@ -1582,16 +1586,16 @@ function drawFittedHudText(text, x, y, maxWidth, preferredSize, color, minimumSi
   let fontSize = Math.round(preferredSize);
   const smallestSize = Math.ceil(minimumSize);
   do {
-    ctx.font = `800 ${fontSize}px Arial, "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-    if (ctx.measureText(text).width <= maxWidth) break;
+    ctx.font = `800 ${fontSize}px Arial, sans-serif`;
+    if (measureEmojiText(ctx, text) <= maxWidth) break;
     fontSize -= 1;
   } while (fontSize > smallestSize);
   ctx.lineWidth = 2;
   ctx.lineJoin = 'round';
   ctx.strokeStyle = 'rgba(2, 6, 23, 0.92)';
-  ctx.strokeText(text, Math.round(x), Math.round(y), maxWidth);
+  paintEmojiText(ctx, text, Math.round(x), Math.round(y), maxWidth, true);
   ctx.fillStyle = color;
-  ctx.fillText(text, Math.round(x), Math.round(y), maxWidth);
+  paintEmojiText(ctx, text, Math.round(x), Math.round(y), maxWidth);
 }
 
 function loop() {

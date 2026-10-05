@@ -37,6 +37,11 @@
     <binary>neon-breakout</binary>
   </provides>
   <releases>
+    <release version="1.5.4" date="2026-10-04">
+      <description>
+        <p>Fixes strictly confined Snap startup on current Ubuntu and bundles canonical Linux emoji artwork across platforms.</p>
+      </description>
+    </release>
     <release version="1.5.3" timestamp="1785232373">
       <description>
         <p>Adds Windows packaging, Microsoft Store integration and refreshed store artwork.</p>

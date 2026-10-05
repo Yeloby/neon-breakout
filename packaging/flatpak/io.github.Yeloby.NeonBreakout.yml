@@ -1,7 +1,9 @@
 app-id: io.github.Yeloby.NeonBreakout
 runtime: org.freedesktop.Platform
-runtime-version: "24.08"
+runtime-version: "25.08"
 sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: "25.08"
 command: neon-breakout
 
 finish-args:
@@ -16,7 +18,7 @@ modules:
     buildsystem: simple
     build-commands:
       - install -Dm755 neon-breakout /app/lib/neon-breakout/neon-breakout
-      - cp -a locales resources chrome-sandbox chrome_100_percent.pak chrome_200_percent.pak icudtl.dat libEGL.so libGLESv2.so libffmpeg.so libvk_swiftshader.so libvulkan.so.1 resources.pak snapshot_blob.bin v8_context_snapshot.bin vk_swiftshader_icd.json /app/lib/neon-breakout/
+      - cp -a LICENSE.electron.txt LICENSES.chromium.html chrome_crashpad_handler locales resources chrome-sandbox chrome_100_percent.pak chrome_200_percent.pak icudtl.dat libEGL.so libGLESv2.so libffmpeg.so libvk_swiftshader.so libvulkan.so.1 resources.pak snapshot_blob.bin v8_context_snapshot.bin vk_swiftshader_icd.json /app/lib/neon-breakout/
       - install -Dm755 neon-breakout-wrapper /app/bin/neon-breakout
       - install -Dm644 io.github.Yeloby.NeonBreakout.desktop /app/share/applications/io.github.Yeloby.NeonBreakout.desktop
       - install -Dm644 io.github.Yeloby.NeonBreakout.png /app/share/icons/hicolor/512x512/apps/io.github.Yeloby.NeonBreakout.png

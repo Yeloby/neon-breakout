@@ -5,8 +5,6 @@ on:
     branches:
       - master
       - main
-    tags:
-      - "v*"
   pull_request:
   workflow_dispatch:
     inputs:
@@ -57,7 +55,7 @@ jobs:
         run: |
           sudo apt-get install -y flatpak flatpak-builder
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+          flatpak install --user -y flathub org.freedesktop.Platform//25.08 org.freedesktop.Sdk//25.08
 
       - name: Bygg Flatpak-pakke
         run: |

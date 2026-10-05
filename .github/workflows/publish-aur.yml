@@ -2,12 +2,6 @@ name: Publiser AUR-pakke
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths:
-      - "packaging/aur/**"
-      - ".github/workflows/publish-aur.yml"
 
 permissions:
   contents: read
